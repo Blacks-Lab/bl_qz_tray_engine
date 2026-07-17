@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="bl_qz_res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.bl_qz_tray_engine</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="point_of_sale.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@id='pos_interface_section']" position="inside">
+                <block title="BlackLabs - QZ Tray Engine / ESC/POS" id="bl_qz_engine_section">
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="pos_receipt_print_escpos"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label string="Usar impresion ESC/POS (QZ Tray)" for="pos_receipt_print_escpos" class="col-lg-9 o_light_label"/>
+                                <div class="text-muted small">
+                                    Si esta desactivado, el POS imprime como siempre (flujo actual).
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" invisible="not pos_receipt_print_escpos">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label for="pos_qz_tray_printer_name" class="o_light_label"/>
+                                <div class="text-muted small">
+                                    Nombre exacto de impresora en QZ Tray (opcional).
+                                </div>
+                                <field name="pos_qz_tray_printer_name" placeholder="Ej: Epson TM-T20III"/>
+                                <div class="mt-2 d-flex align-items-center gap-2 flex-wrap">
+                                    <a href="#" role="button" class="btn btn-secondary btn-sm bl-qz-backend-detect-btn">Listar impresoras QZ</a>
+                                    <span class="text-muted small">Detecta impresoras locales via QZ Tray y completa este campo.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" invisible="not pos_receipt_print_escpos">
+                            <div class="o_setting_left_pane">
+                                <field name="pos_qz_tray_force_raw"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label string="Activar forceRaw" for="pos_qz_tray_force_raw" class="col-lg-6 o_light_label"/>
+                                <div class="text-muted small">
+                                    Recomendado solo si el driver no procesa raw correctamente.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" invisible="not pos_receipt_print_escpos">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label for="pos_qz_logo_scale_percent" class="o_light_label"/>
+                                <div class="text-muted small">
+                                    Escala solo para el logo de QZ (100 = mismo tamano configurado, 130 = 30% mas grande).
+                                </div>
+                                <field name="pos_qz_logo_scale_percent" class="oe_inline" placeholder="130"/>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" invisible="not pos_receipt_print_escpos">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label for="pos_qz_logo_dot_density" class="o_light_label"/>
+                                <div class="text-muted small">
+                                    Densidad de rasterizado del logo para QZ (single o double).
+                                </div>
+                                <field name="pos_qz_logo_dot_density"/>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" invisible="not pos_receipt_print_escpos">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label for="pos_qz_ticket_copies" class="o_light_label"/>
+                                <div class="text-muted small">
+                                    Cantidad de copias a imprimir por ticket cuando se usa QZ.
+                                </div>
+                                <field name="pos_qz_ticket_copies" class="oe_inline" placeholder="1"/>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-12 o_setting_box" invisible="not pos_receipt_print_escpos">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <span class="o_form_label">Configuracion avanzada de layout de ticket (QZ/ESC-POS)</span>
+                                <div class="text-muted small">
+                                    Ajustes avanzados de ancho y corrimiento del cuerpo. Usar solo si necesita calibracion fina de la impresora.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" invisible="not pos_receipt_print_escpos">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label for="pos_qz_ticket_width_cols" class="o_light_label"/>
+                                <div class="text-muted small">
+                                    Columnas del ticket ESC/POS (0 = auto por impresora, recomendado para no tocar codigo).
+                                </div>
+                                <field name="pos_qz_ticket_width_cols" class="oe_inline" placeholder="0"/>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" invisible="not pos_receipt_print_escpos">
+                            <div class="o_setting_left_pane">
+                                <field name="pos_qz_body_tuning_enabled"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label string="Ajuste manual de bloque cuerpo" for="pos_qz_body_tuning_enabled" class="col-lg-9 o_light_label"/>
+                                <div class="text-muted small">
+                                    Habilita ancho y corrimiento manual del cuerpo del ticket.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" invisible="not pos_receipt_print_escpos or not pos_qz_body_tuning_enabled">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label for="pos_qz_body_block_width" class="o_light_label"/>
+                                <div class="text-muted small">
+                                    Ancho del bloque de items en columnas cuando el ajuste manual esta activo.
+                                </div>
+                                <field name="pos_qz_body_block_width" class="oe_inline" placeholder="42"/>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" invisible="not pos_receipt_print_escpos or not pos_qz_body_tuning_enabled">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label for="pos_qz_body_horizontal_offset" class="o_light_label"/>
+                                <div class="text-muted small">
+                                    Corrimiento horizontal del bloque (positivo a derecha, negativo a izquierda).
+                                </div>
+                                <field name="pos_qz_body_horizontal_offset" class="oe_inline" placeholder="0"/>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" invisible="not pos_receipt_print_escpos">
+                            <div class="o_setting_left_pane">
+                                <field name="qz_signing_enabled"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label string="Firmar solicitudes de QZ" for="qz_signing_enabled" class="col-lg-9 o_light_label"/>
+                                <div class="text-muted small">
+                                    Recomendado para evitar el popup de "anonymous request" en QZ Tray.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" invisible="not pos_receipt_print_escpos or not qz_signing_enabled">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label for="qz_signing_ready" class="o_light_label"/>
+                                <div class="text-muted small">
+                                    Estado del material criptografico usado para firmar pedidos de impresion.
+                                </div>
+                                <field name="qz_signing_ready" readonly="1"/>
+                                <button
+                                    type="object"
+                                    name="action_generate_qz_signing_material"
+                                    string="Generar / Renovar certificado QZ"
+                                    class="btn btn-secondary mt-2"
+                                />
+                                <button
+                                    type="object"
+                                    name="action_download_qz_signing_certificate"
+                                    string="Descargar certificado QZ (.pem)"
+                                    class="btn btn-secondary mt-2 ms-2"
+                                />
+                                <div class="text-muted small mt-1">
+                                    Odoo genera automaticamente certificado y clave privada para firmar llamadas de QZ.
+                                </div>
+                                <div class="text-muted small mt-1">
+                                    Descargue el archivo .pem e importelo en QZ Tray para confiar el certificado.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" invisible="not pos_receipt_print_escpos">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <button
+                                    type="object"
+                                    name="action_print_qz_logo_header_test"
+                                    string="Imprimir prueba logo + cabecera (QZ)"
+                                    class="btn btn-secondary"
+                                />
+                                <div class="text-muted small mt-1">
+                                    Imprime solo logo y cabecera para ajustar tamano/alineacion rapidamente.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>
