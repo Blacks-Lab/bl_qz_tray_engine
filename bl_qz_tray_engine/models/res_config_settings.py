@@ -44,6 +44,11 @@ class ResConfigSettings(models.TransientModel):
         string="Densidad logo QZ",
         readonly=False,
     )
+    pos_qz_image_encoding = fields.Selection(
+        related="pos_config_id.qz_image_encoding",
+        string="Codificacion de imagen ESC/POS",
+        readonly=False,
+    )
     pos_qz_ticket_copies = fields.Integer(
         related="pos_config_id.qz_ticket_copies",
         string="Copias de ticket QZ",

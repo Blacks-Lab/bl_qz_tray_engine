@@ -22,6 +22,8 @@ const ESC_POS_ALIGN_RIGHT = `${ESC}a\x02`;
 let connectPromise = null;
 let cachedPrinterKey = "";
 let cachedPrinterName = "";
+const QZ_READY_CACHE_TTL_MS = 8000;
+let qzReadyCacheTs = 0;
 
 const QZ_TRAY_UNAVAILABLE_MESSAGE =
     "QZ Tray parece estar cerrado o no disponible en este equipo. Abri la aplicacion QZ Tray y reintenta la impresion.";
@@ -219,6 +221,7 @@ function findClosestPrinterName(configuredName, printers) {
 
 async function ensureConnected(qz) {
     if (!qz.websocket.isActive()) {
+        qzReadyCacheTs = 0;
         if (!connectPromise) {
             connectPromise = qz.websocket.connect(CONNECT_OPTIONS).finally(() => {
                 connectPromise = null;
@@ -235,14 +238,22 @@ async function ensureConnected(qz) {
         }
     }
 
+    const now = Date.now();
+    if (now - qzReadyCacheTs < QZ_READY_CACHE_TTL_MS) {
+        return;
+    }
+
     try {
         await waitForQzReady(qz);
+        qzReadyCacheTs = Date.now();
     } catch (error) {
+        qzReadyCacheTs = 0;
         const detail = normalizeQzErrorMessage(error);
         if (!isTransientQzConnectionError(detail)) {
             throw new Error(buildQzTrayUnavailableMessage(detail));
         }
         await reconnectSocket(qz);
+        qzReadyCacheTs = Date.now();
     }
 }
 
@@ -257,6 +268,7 @@ export async function listQzTrayPrinters() {
 export function clearQzPrinterCache() {
     cachedPrinterKey = "";
     cachedPrinterName = "";
+    qzReadyCacheTs = 0;
 }
 
 async function resolvePrinterName(qz, posConfig) {

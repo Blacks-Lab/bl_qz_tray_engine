@@ -16,6 +16,21 @@ class PosConfig(models.Model):
         string="Densidad logo",
         default="double",
     )
+    qz_image_encoding = fields.Selection(
+        [
+            ("esc_asterisk", "ESC * (maxima compatibilidad)"),
+            ("raster", "GS v 0 (mas rapido)"),
+        ],
+        string="Codificacion de imagen ESC/POS",
+        default="esc_asterisk",
+        help=(
+            "ESC *: envia el raster en bandas de 24 filas. Compatible con casi todo "
+            "el firmware pero mas lento.\n"
+            "GS v 0: envia la imagen completa en un solo comando. Mas rapido y "
+            "visualmente identico, pero requiere firmware compatible. Si el ticket "
+            "sale con caracteres basura, volve a ESC *."
+        ),
+    )
     qz_ticket_width_cols = fields.Integer("Ancho ticket (cols)", default=0)
     qz_body_tuning_enabled = fields.Boolean("Ajuste manual cuerpo", default=False)
     qz_body_block_width = fields.Integer("Ancho bloque cuerpo", default=42)
@@ -33,6 +48,7 @@ class PosConfig(models.Model):
             "qz_ticket_copies",
             "qz_logo_scale_percent",
             "qz_logo_dot_density",
+            "qz_image_encoding",
             "qz_ticket_width_cols",
             "qz_body_tuning_enabled",
             "qz_body_block_width",
@@ -60,6 +76,7 @@ class PosConfig(models.Model):
             "logo_alignment",
             "qz_logo_scale_percent",
             "qz_logo_dot_density",
+            "qz_image_encoding",
             "qz_ticket_copies",
             "qz_tray_force_raw",
             "qz_tray_printer_name",

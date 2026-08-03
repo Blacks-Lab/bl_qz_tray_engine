@@ -550,6 +550,16 @@ export function getEscPosImageDotDensity(posConfig = {}) {
 }
 
 /**
+ * Codificacion del raster ESC/POS.
+ * esc_asterisk (default): bandas de 24 filas, maxima compatibilidad.
+ * raster: comando GS v 0, imagen completa de una, mas rapido e identico visualmente.
+ */
+export function getEscPosImageEncoding(posConfig = {}) {
+    const encoding = String(posConfig?.qz_image_encoding || "esc_asterisk").toLowerCase();
+    return encoding === "raster" ? "raster" : "esc_asterisk";
+}
+
+/**
  * Construye el objeto imagen que QZ Tray entiende como raster ESC/POS.
  * IMPORTANTE: si se envía el base64 como string plano, QZ lo trata como comando RAW
  * y la impresora escupe el texto base64. Por eso SIEMPRE debe ir envuelto así.
@@ -571,7 +581,7 @@ export function buildQzEscPosImageObject(base64Data, options = {}) {
         data,
         options: {
             language: "ESCPOS",
-            imageEncoding: "esc_asterisk",
+            imageEncoding: options.imageEncoding || "esc_asterisk",
             dotDensity: options.dotDensity || "double-legacy",
             x: 0,
             y: 0,

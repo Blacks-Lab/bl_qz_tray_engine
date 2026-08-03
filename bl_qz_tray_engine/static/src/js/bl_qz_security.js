@@ -178,8 +178,10 @@ export async function ensureQzSecurityConfigured() {
         throw new Error("No se pudo inicializar la seguridad de QZ Tray.");
     }
 
-    applySecurityHandlers(configuredQz);
-    await refreshActiveSocketIfNeeded(configuredQz);
-    configuredQz.__blQzSecurityConfigured = true;
+    // setupPromise ya deja la seguridad configurada para el flujo normal.
+    if (!configuredQz.__blQzSecurityConfigured) {
+        throw new Error("No se pudo inicializar la seguridad de QZ Tray.");
+    }
+
     return configuredQz;
 }

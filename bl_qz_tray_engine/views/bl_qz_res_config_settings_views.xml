@@ -72,6 +72,18 @@
                         <div class="col-12 col-lg-6 o_setting_box" invisible="not pos_receipt_print_escpos">
                             <div class="o_setting_left_pane"/>
                             <div class="o_setting_right_pane">
+                                <label for="pos_qz_image_encoding" class="o_light_label"/>
+                                <div class="text-muted small">
+                                    ESC *: maxima compatibilidad. GS v 0: mas rapido, salida identica,
+                                    requiere firmware compatible. Si el ticket sale con basura, volve a ESC *.
+                                </div>
+                                <field name="pos_qz_image_encoding"/>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box" invisible="not pos_receipt_print_escpos">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
                                 <label for="pos_qz_ticket_copies" class="o_light_label"/>
                                 <div class="text-muted small">
                                     Cantidad de copias a imprimir por ticket cuando se usa QZ.
