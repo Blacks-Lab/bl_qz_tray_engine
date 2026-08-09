@@ -5,74 +5,15 @@
         <field name="model">pos.config</field>
         <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//div[hasclass('o_settings_container') and not(@id='restaurant_on_create')]" position="inside">
-                <setting
-                    id="bl_qz_ticket_printing_settings"
-                    string="BlackLabs - QZ Tray (Engine)"
-                    help="Configuracion rapida de impresion QZ para este Punto de Venta."
-                >
-                    <div class="content-group mt16">
-                        <div class="row mt8">
-                            <label for="receipt_print_escpos" class="col-lg-4 o_light_label" string="Usar impresion ESC/POS"/>
-                            <field name="receipt_print_escpos" class="col-lg-8"/>
+            <xpath expr="//sheet" position="inside">
+                <h2>Impresora ESC/POS QZ Tray</h2>
+                <div id="bl_qz_pos_config_section" class="row mt16 o_settings_container" invisible="context.get('pos_config_create_mode', False)">
+                    <setting id="bl_qz_device_panel_pos_config">
+                        <div class="content-group mt16">
+                            <widget name="bl_qz_device_panel"/>
                         </div>
-                        <div class="row mt8" invisible="not receipt_print_escpos">
-                            <label for="qz_tray_printer_name" class="col-lg-4 o_light_label" string="Impresora QZ"/>
-                            <field name="qz_tray_printer_name" class="col-lg-8" placeholder="Ej: Epson TM-T20III"/>
-                        </div>
-                        <div class="row mt8" invisible="not receipt_print_escpos">
-                            <div class="col-lg-4"/>
-                            <div class="col-lg-8 d-flex align-items-center gap-2 flex-wrap">
-                                <a href="#" role="button" class="btn btn-secondary btn-sm bl-qz-backend-detect-btn">Listar impresoras QZ</a>
-                                <span class="text-muted small">Detecta impresoras locales via QZ Tray y completa el campo Impresora QZ.</span>
-                            </div>
-                        </div>
-                        <div class="row mt8" invisible="not receipt_print_escpos">
-                            <label for="qz_tray_force_raw" class="col-lg-4 o_light_label" string="Force Raw"/>
-                            <field name="qz_tray_force_raw" class="col-lg-8"/>
-                        </div>
-                        <div class="row mt8" invisible="not receipt_print_escpos">
-                            <label for="qz_ticket_copies" class="col-lg-4 o_light_label" string="Copias QZ"/>
-                            <field name="qz_ticket_copies" class="col-lg-8"/>
-                        </div>
-                        <div class="row mt8" invisible="not receipt_print_escpos">
-                            <label for="qz_logo_scale_percent" class="col-lg-4 o_light_label" string="Escala logo QZ (%)"/>
-                            <field name="qz_logo_scale_percent" class="col-lg-8" placeholder="130"/>
-                        </div>
-                        <div class="row mt8" invisible="not receipt_print_escpos">
-                            <label for="qz_logo_dot_density" class="col-lg-4 o_light_label" string="Densidad logo"/>
-                            <field name="qz_logo_dot_density" class="col-lg-8"/>
-                        </div>
-                    </div>
-
-                    <div class="content-group mt16" invisible="not receipt_print_escpos">
-                        <div class="row mt8">
-                            <div class="col-lg-12 text-muted small fw-bold">Configuracion avanzada de layout de ticket (QZ/ESC-POS)</div>
-                        </div>
-                        <div class="row mt8">
-                            <label for="qz_ticket_width_cols" class="col-lg-4 o_light_label" string="Ancho ticket (cols)"/>
-                            <field name="qz_ticket_width_cols" class="col-lg-8" placeholder="0"/>
-                        </div>
-                        <div class="row mt8">
-                            <label for="qz_body_tuning_enabled" class="col-lg-4 o_light_label" string="Ajuste manual cuerpo"/>
-                            <field name="qz_body_tuning_enabled" class="col-lg-8"/>
-                        </div>
-                        <div class="row mt8" invisible="not qz_body_tuning_enabled">
-                            <label for="qz_body_block_width" class="col-lg-4 o_light_label" string="Ancho bloque cuerpo"/>
-                            <field name="qz_body_block_width" class="col-lg-8" placeholder="42"/>
-                        </div>
-                        <div class="row mt8" invisible="not qz_body_tuning_enabled">
-                            <label for="qz_body_horizontal_offset" class="col-lg-4 o_light_label" string="Offset bloque cuerpo"/>
-                            <field name="qz_body_horizontal_offset" class="col-lg-8" placeholder="0"/>
-                        </div>
-                        <div class="row mt8">
-                            <div class="col-lg-4"/>
-                            <div class="col-lg-8 text-muted small">
-                                Ajustes avanzados de ancho y corrimiento del cuerpo. Usar solo si necesita calibracion fina de la impresora.
-                            </div>
-                        </div>
-                    </div>
-                </setting>
+                    </setting>
+                </div>
             </xpath>
         </field>
     </record>

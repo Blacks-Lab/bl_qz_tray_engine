@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="bl_qz_device_company_rule" model="ir.rule">
+        <field name="name">bl.qz.device multi-company</field>
+        <field name="model_id" ref="model_bl_qz_device"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="bl_qz_device_printer_company_rule" model="ir.rule">
+        <field name="name">bl.qz.device.printer multi-company</field>
+        <field name="model_id" ref="model_bl_qz_device_printer"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

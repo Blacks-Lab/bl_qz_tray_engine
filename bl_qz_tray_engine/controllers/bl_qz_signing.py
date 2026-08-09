@@ -1,21 +1,67 @@
 # -*- coding: utf-8 -*-
 
 import base64
+from urllib.parse import parse_qs, urlparse
 
 from odoo import _, http
 from odoo.exceptions import UserError
 from odoo.http import request
 
 from ..bl_qz_signing_utils import (
-    QZ_PARAM_SIGNING_ENABLED,
     QZ_SIGNATURE_ALGORITHM,
-    ensure_signing_material,
+    ensure_company_signing_material,
     normalize_pem,
-    param_is_enabled,
 )
 
 
 class BlQzSigningController(http.Controller):
+
+    @staticmethod
+    def _to_int(value):
+        try:
+            parsed = int(value)
+        except (TypeError, ValueError):
+            return 0
+        return parsed if parsed > 0 else 0
+
+    def _resolve_company(self, pos_config_id=None, device_id=None, company_id=None):
+        env = request.env
+
+        config_candidates = [
+            pos_config_id,
+            request.params.get("pos_config_id"),
+            request.params.get("config_id"),
+            request.session.get("pos_config_id"),
+            request.session.get("config_id"),
+        ]
+
+        referrer = request.httprequest.referrer or ""
+        if referrer:
+            query = parse_qs(urlparse(referrer).query)
+            config_candidates.append((query.get("config_id") or [None])[0])
+            config_candidates.append((query.get("pos_config_id") or [None])[0])
+
+        for candidate in config_candidates:
+            candidate_id = self._to_int(candidate)
+            if not candidate_id:
+                continue
+            pos_config = env["pos.config"].sudo().browse(candidate_id)
+            if pos_config.exists():
+                return pos_config.company_id.sudo()
+
+        company_candidate_id = self._to_int(company_id or request.params.get("company_id"))
+        if company_candidate_id:
+            company = env["res.company"].sudo().browse(company_candidate_id)
+            if company.exists():
+                return company
+
+        device_candidate_id = self._to_int(device_id or request.params.get("device_id"))
+        if device_candidate_id:
+            device = env["bl.qz.device"].sudo().browse(device_candidate_id)
+            if device.exists():
+                return device.company_id.sudo()
+
+        return env.company.sudo()
 
     @staticmethod
     def _get_cryptography_primitives():
@@ -47,11 +93,25 @@ class BlQzSigningController(http.Controller):
             "Revise la configuracion en Punto de Venta > Ajustes."
         ))
 
-    @staticmethod
-    def _get_certificate_pem():
+    def _get_certificate_pem(self, pos_config_id=None, device_id=None, company_id=None):
+        company = self._resolve_company(
+            pos_config_id=pos_config_id,
+            device_id=device_id,
+            company_id=company_id,
+        )
+        if not company.bl_qz_signing_enabled:
+            raise UserError(_(
+                "La firma de QZ Tray esta desactivada para la compania actual. "
+                "Active la opcion de firma en la configuracion de la compania."
+            ))
+
         params = request.env["ir.config_parameter"].sudo()
+        base_url = params.get_param("web.base.url", "")
         try:
-            certificate, private_key = ensure_signing_material(params)
+            certificate, private_key = ensure_company_signing_material(
+                company,
+                base_url=base_url,
+            )
         except RuntimeError as error:
             raise UserError(_(
                 "No se puede generar el certificado de QZ Tray porque falta la dependencia "
@@ -68,18 +128,25 @@ class BlQzSigningController(http.Controller):
 
         return certificate
 
-    def _get_private_key_pem(self):
-        params = request.env["ir.config_parameter"].sudo()
-
-        enabled = param_is_enabled(params.get_param(QZ_PARAM_SIGNING_ENABLED, "True"))
-        if not enabled:
+    def _get_private_key_pem(self, pos_config_id=None, device_id=None, company_id=None):
+        company = self._resolve_company(
+            pos_config_id=pos_config_id,
+            device_id=device_id,
+            company_id=company_id,
+        )
+        if not company.bl_qz_signing_enabled:
             raise UserError(_(
-                "La firma de QZ Tray esta desactivada. "
-                "Active la opcion de firma en Ajustes de Punto de Venta."
+                "La firma de QZ Tray esta desactivada para la compania actual. "
+                "Active la opcion de firma en la configuracion de la compania."
             ))
 
+        params = request.env["ir.config_parameter"].sudo()
+        base_url = params.get_param("web.base.url", "")
         try:
-            cert, private_key = ensure_signing_material(params)
+            cert, private_key = ensure_company_signing_material(
+                company,
+                base_url=base_url,
+            )
         except RuntimeError as error:
             raise UserError(_(
                 "No se puede generar la clave de firma de QZ Tray porque falta la dependencia "
@@ -98,17 +165,12 @@ class BlQzSigningController(http.Controller):
         type="json",
         auth="user",
     )
-    def qz_certificate(self):
-        params = request.env["ir.config_parameter"].sudo()
-
-        enabled = param_is_enabled(params.get_param(QZ_PARAM_SIGNING_ENABLED, "True"))
-        if not enabled:
-            raise UserError(_(
-                "La firma de QZ Tray esta desactivada. "
-                "Active la opcion de firma en Ajustes de Punto de Venta."
-            ))
-
-        certificate = self._get_certificate_pem()
+    def qz_certificate(self, pos_config_id=None, device_id=None, company_id=None):
+        certificate = self._get_certificate_pem(
+            pos_config_id=pos_config_id,
+            device_id=device_id,
+            company_id=company_id,
+        )
 
         return {
             "certificate": certificate,
@@ -120,8 +182,12 @@ class BlQzSigningController(http.Controller):
         type="http",
         auth="user",
     )
-    def qz_certificate_download(self):
-        certificate = self._get_certificate_pem()
+    def qz_certificate_download(self, pos_config_id=None, device_id=None, company_id=None):
+        certificate = self._get_certificate_pem(
+            pos_config_id=pos_config_id,
+            device_id=device_id,
+            company_id=company_id,
+        )
         headers = [
             ("Content-Type", "application/x-pem-file; charset=utf-8"),
             ("Content-Disposition", 'attachment; filename="qz-tray-certificate.pem"'),
@@ -133,11 +199,15 @@ class BlQzSigningController(http.Controller):
         type="json",
         auth="user",
     )
-    def qz_sign(self, data_to_sign=None):
+    def qz_sign(self, data_to_sign=None, pos_config_id=None, device_id=None, company_id=None):
         if not data_to_sign or not isinstance(data_to_sign, str):
             raise UserError(_("No hay contenido para firmar en la solicitud QZ."))
 
-        private_key_pem = self._get_private_key_pem()
+        private_key_pem = self._get_private_key_pem(
+            pos_config_id=pos_config_id,
+            device_id=device_id,
+            company_id=company_id,
+        )
         _, padding, load_pem_private_key = self._get_cryptography_primitives()
 
         try:

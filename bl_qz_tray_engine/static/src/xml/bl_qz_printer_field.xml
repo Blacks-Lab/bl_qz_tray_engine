@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="bl_qz_tray_engine.BlQzPrinterField" t-inherit="web.CharField" t-inherit-mode="primary">
+        <xpath expr="//div[hasclass('o_field_input_buttons')]" position="inside">
+            <button
+                t-if="!props.readonly"
+                type="button"
+                class="btn btn-outline-secondary btn-sm ms-2"
+                t-on-click.prevent="onDetectPrinters"
+            >
+                Detectar impresoras
+            </button>
+        </xpath>
+    </t>
+
+    <t t-name="bl_qz_tray_engine.BlQzPrinterSelectionDialog">
+        <Dialog size="'md'" title="props.title || 'Seleccionar impresora QZ'">
+            <div class="o_bl_qz_printer_dialog list-group">
+                <t t-foreach="props.printers" t-as="printerName" t-key="printerName">
+                    <button
+                        type="button"
+                        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                        t-att-data-printer-name="printerName"
+                        t-on-click="onSelectPrinter"
+                    >
+                        <span t-esc="printerName"/>
+                        <span>
+                            <span
+                                t-if="printerName === props.currentPrinter"
+                                class="badge text-bg-primary rounded-pill me-1"
+                            >
+                                Actual
+                            </span>
+                            <span
+                                t-if="printerName === props.defaultPrinter"
+                                class="badge text-bg-secondary rounded-pill"
+                            >
+                                Predeterminada
+                            </span>
+                        </span>
+                    </button>
+                </t>
+            </div>
+            <t t-set-slot="footer">
+                <button class="btn btn-secondary" t-on-click="props.close">
+                    Cerrar
+                </button>
+            </t>
+        </Dialog>
+    </t>
+</templates>
