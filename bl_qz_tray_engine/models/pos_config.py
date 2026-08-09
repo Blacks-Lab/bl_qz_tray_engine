@@ -6,9 +6,31 @@ from odoo import api, fields, models
 class PosConfig(models.Model):
     _inherit = "pos.config"
 
+    bl_qz_fallback_printer_name = fields.Char(
+        string="Impresora por defecto del TPV",
+        help=(
+            "Se usa solo si el equipo desde el que se opera no tiene impresora propia "
+            "configurada."
+        ),
+    )
+
     receipt_print_escpos = fields.Boolean("Imprimir via QZ Tray (ESC/POS)", default=True)
-    qz_tray_printer_name = fields.Char("Nombre impresora QZ", default="")
-    qz_tray_force_raw = fields.Boolean("Force Raw", default=False)
+    qz_tray_printer_name = fields.Char(
+        "Nombre impresora QZ",
+        default="",
+        help=(
+            "Campo legacy (deprecado). Se mantiene por compatibilidad con modulos existentes. "
+            "Use la configuracion por dispositivo o la impresora por defecto del TPV."
+        ),
+    )
+    qz_tray_force_raw = fields.Boolean(
+        "Force Raw",
+        default=False,
+        help=(
+            "Campo legacy (deprecado). Se mantiene por compatibilidad con modulos existentes. "
+            "Use la configuracion por dispositivo para nuevos desarrollos."
+        ),
+    )
     qz_ticket_copies = fields.Integer("Copias por ticket", default=1)
     qz_logo_scale_percent = fields.Integer("Escala logo QZ (%)", default=100)
     qz_logo_dot_density = fields.Selection(
@@ -42,6 +64,7 @@ class PosConfig(models.Model):
         if not fields_list:
             return fields_list
         qz_fields = [
+            "bl_qz_fallback_printer_name",
             "receipt_print_escpos",
             "qz_tray_printer_name",
             "qz_tray_force_raw",

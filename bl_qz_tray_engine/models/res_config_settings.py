@@ -3,11 +3,7 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
-from ..bl_qz_signing_utils import (
-    QZ_PARAM_SIGNING_ENABLED,
-    ensure_signing_material,
-    has_signing_material,
-)
+from ..bl_qz_signing_utils import ensure_company_signing_material, has_company_signing_material
 
 
 class ResConfigSettings(models.TransientModel):
@@ -76,10 +72,9 @@ class ResConfigSettings(models.TransientModel):
     )
 
     qz_signing_enabled = fields.Boolean(
+        related="company_id.bl_qz_signing_enabled",
+        readonly=False,
         string="Firmar solicitudes de QZ automaticamente",
-        config_parameter=QZ_PARAM_SIGNING_ENABLED,
-        default=True,
-        help="Evita el popup de 'anonymous request' en QZ Tray al firmar cada solicitud desde Odoo.",
     )
 
     qz_signing_ready = fields.Boolean(
@@ -89,16 +84,19 @@ class ResConfigSettings(models.TransientModel):
 
     @api.depends("qz_signing_enabled")
     def _compute_qz_signing_ready(self):
-        params = self.env["ir.config_parameter"].sudo()
-        ready = has_signing_material(params)
         for rec in self:
-            rec.qz_signing_ready = ready
+            rec.qz_signing_ready = has_company_signing_material(rec.company_id.sudo())
 
     def action_generate_qz_signing_material(self):
         self.ensure_one()
         params = self.env["ir.config_parameter"].sudo()
+        base_url = params.get_param("web.base.url", "")
         try:
-            ensure_signing_material(params, force=True)
+            ensure_company_signing_material(
+                self.company_id.sudo(),
+                force=True,
+                base_url=base_url,
+            )
         except RuntimeError as error:
             self._raise_qz_signing_dependency_error(error)
 
@@ -118,15 +116,9 @@ class ResConfigSettings(models.TransientModel):
 
     def action_download_qz_signing_certificate(self):
         self.ensure_one()
-        params = self.env["ir.config_parameter"].sudo()
-        try:
-            ensure_signing_material(params)
-        except RuntimeError as error:
-            self._raise_qz_signing_dependency_error(error)
-
         return {
             "type": "ir.actions.act_url",
-            "url": "/bl_qz/certificate/download",
+            "url": f"/bl_qz/certificate/download?company_id={self.company_id.id}",
             "target": "new",
         }
 

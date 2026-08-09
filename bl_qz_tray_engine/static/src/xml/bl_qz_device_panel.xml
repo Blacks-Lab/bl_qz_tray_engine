@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="bl_qz_tray_engine.BlQzDevicePanel">
+        <div class="card border-0 shadow-sm o_bl_qz_device_panel">
+            <div class="card-body">
+                <t t-if="state.loading">
+                    <div class="text-muted">Cargando configuracion del equipo...</div>
+                </t>
+
+                <t t-elif="state.error">
+                    <div class="alert alert-danger mb-0" role="alert">
+                        <t t-esc="state.error"/>
+                    </div>
+                </t>
+
+                <t t-else="">
+                    <div class="row g-3 align-items-center mb-3">
+                        <label class="col-lg-4 col-form-label fw-semibold">Configuracion de este equipo:</label>
+                        <div class="col-lg-8">
+                            <input
+                                type="text"
+                                class="form-control"
+                                t-att-value="state.device_name"
+                                t-on-change="onDeviceNameChange"
+                                t-att-readonly="readonly or state.saving"
+                            />
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            t-att-id="'bl_qz_enabled_' + (state.device and state.device.id or 0)"
+                            t-att-checked="state.qz_enabled"
+                            t-on-change="onEnabledChange"
+                            t-att-disabled="readonly or state.saving"
+                        />
+                        <label class="form-check-label" t-att-for="'bl_qz_enabled_' + (state.device and state.device.id or 0)">
+                            Usar impresion ESC/POS via QZ Tray
+                        </label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold d-block">Modo:</label>
+                        <div class="d-flex gap-4 flex-wrap">
+                            <div class="form-check">
+                                <input
+                                    class="form-check-input"
+                                    type="radio"
+                                    t-att-id="'bl_qz_mode_global_' + (state.device and state.device.id or 0)"
+                                    name="bl_qz_mode"
+                                    value="global"
+                                    t-att-checked="state.printer_mode === 'global'"
+                                    t-on-change="onModeGlobalChange"
+                                    t-att-disabled="readonly or state.saving"
+                                />
+                                <label class="form-check-label" t-att-for="'bl_qz_mode_global_' + (state.device and state.device.id or 0)">
+                                    Una impresora para todos los modulos
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input
+                                    class="form-check-input"
+                                    type="radio"
+                                    t-att-id="'bl_qz_mode_module_' + (state.device and state.device.id or 0)"
+                                    name="bl_qz_mode"
+                                    value="per_module"
+                                    t-att-checked="state.printer_mode === 'per_module'"
+                                    t-on-change="onModePerModuleChange"
+                                    t-att-disabled="readonly or state.saving"
+                                />
+                                <label class="form-check-label" t-att-for="'bl_qz_mode_module_' + (state.device and state.device.id or 0)">
+                                    Impresora propia por modulo
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <t t-if="!isPerModule">
+                        <div class="row g-2 align-items-center mb-3">
+                            <label class="col-lg-4 col-form-label fw-semibold">Impresora del equipo:</label>
+                            <div class="col-lg-8 d-flex gap-2 flex-wrap">
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    t-att-value="state.printer_name"
+                                    t-on-change="onGlobalPrinterChange"
+                                    t-att-readonly="readonly or state.saving"
+                                />
+                                <button
+                                    type="button"
+                                    class="btn bl_qz_detect_btn"
+                                    t-on-click="onDetectPrinters"
+                                    t-att-disabled="readonly or state.saving or state.detecting"
+                                >
+                                    <t t-if="state.detecting">
+                                        <i class="fa fa-spinner fa-spin me-1"/>
+                                        Buscando...
+                                    </t>
+                                    <t t-else="">
+                                        <i class="fa fa-magic me-1"/>
+                                        Detectar impresoras
+                                    </t>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 align-items-center mb-3">
+                            <label class="col-lg-4 col-form-label fw-semibold">Copias:</label>
+                            <div class="col-lg-8">
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="10"
+                                    class="form-control"
+                                    t-att-value="state.copies"
+                                    t-on-change="onGlobalCopiesChange"
+                                    t-att-readonly="readonly or state.saving"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="row g-3 align-items-center mb-4">
+                            <label class="col-lg-4 col-form-label fw-semibold">Force RAW:</label>
+                            <div class="col-lg-8">
+                                <input
+                                    type="checkbox"
+                                    class="form-check-input"
+                                    t-att-checked="state.force_raw"
+                                    t-on-change="onGlobalForceRawChange"
+                                    t-att-disabled="readonly or state.saving"
+                                />
+                            </div>
+                        </div>
+                    </t>
+
+                    <t t-if="isPerModule">
+                        <div class="table-responsive mb-4">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Modulo</th>
+                                        <th>Impresora + Detectar</th>
+                                        <th class="text-center">Copias</th>
+                                        <th class="text-center">Force RAW</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="state.module_rows" t-as="row" t-key="row.module_key">
+                                        <td class="fw-semibold text-capitalize"><t t-esc="row.label"/></td>
+                                        <td>
+                                            <div class="d-flex gap-2 flex-wrap">
+                                                <input
+                                                    type="text"
+                                                    class="form-control"
+                                                    t-att-data-module-key="row.module_key"
+                                                    t-att-value="row.printer_name"
+                                                    t-on-change="onModulePrinterChange"
+                                                    t-att-readonly="readonly or state.saving"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    class="btn bl_qz_detect_btn bl_qz_detect_btn_row"
+                                                    t-att-data-module-key="row.module_key"
+                                                    t-on-click="onDetectModulePrinter"
+                                                    t-att-disabled="readonly or state.saving or state.detecting"
+                                                >
+                                                    <i class="fa fa-magic me-1"/>
+                                                    Detectar
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td style="max-width: 120px;">
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="10"
+                                                class="form-control text-center"
+                                                t-att-data-module-key="row.module_key"
+                                                t-att-value="row.copies"
+                                                t-on-change="onModuleCopiesChange"
+                                                t-att-readonly="readonly or state.saving"
+                                            />
+                                        </td>
+                                        <td class="text-center">
+                                            <input
+                                                type="checkbox"
+                                                class="form-check-input"
+                                                t-att-data-module-key="row.module_key"
+                                                t-att-checked="row.force_raw"
+                                                t-on-change="onModuleForceRawChange"
+                                                t-att-disabled="readonly or state.saving"
+                                            />
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </t>
+
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            t-on-click="onPrintHeaderTest"
+                        >
+                            Imprimir cabecera de prueba
+                        </button>
+                        <button
+                            t-if="state.canDownload"
+                            type="button"
+                            class="btn btn-secondary"
+                            t-on-click="onDownloadCertificate"
+                        >
+                            Descargar certificado (.pem)
+                        </button>
+                        <button
+                            t-if="state.canGenerate"
+                            type="button"
+                            class="btn btn-secondary"
+                            t-on-click="onGenerateCertificate"
+                        >
+                            Generar / Renovar certificado
+                        </button>
+                    </div>
+                </t>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="bl_qz_tray_engine.BlQzDevicePrinterDialog">
+        <Dialog size="'md'" title="props.title || 'Seleccionar impresora QZ'">
+            <div class="list-group">
+                <t t-foreach="props.printers" t-as="printer" t-key="printer.name">
+                    <button
+                        type="button"
+                        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                        t-att-data-printer-name="printer.name"
+                        t-on-click="onSelectPrinter"
+                    >
+                        <span t-esc="printer.name"/>
+                        <span>
+                            <span
+                                t-if="printer.isCurrent"
+                                class="badge text-bg-primary rounded-pill me-1"
+                            >
+                                Actual
+                            </span>
+                            <span
+                                t-if="printer.isDefault"
+                                class="badge text-bg-secondary rounded-pill"
+                            >
+                                Predeterminada
+                            </span>
+                        </span>
+                    </button>
+                </t>
+            </div>
+            <t t-set-slot="footer">
+                <button class="btn btn-secondary" t-on-click="onCancelDialog">
+                    Cancelar
+                </button>
+            </t>
+        </Dialog>
+    </t>
+</templates>

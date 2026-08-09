@@ -27,6 +27,35 @@ let qzReadyCacheTs = 0;
 
 const QZ_TRAY_UNAVAILABLE_MESSAGE =
     "QZ Tray parece estar cerrado o no disponible en este equipo. Abri la aplicacion QZ Tray y reintenta la impresion.";
+const BL_QZ_DEVICE_UUID_KEY = "bl_qz_device_uuid";
+
+export function blQzGetDeviceUuid() {
+    let storedUuid = "";
+    try {
+        storedUuid = (window.localStorage.getItem(BL_QZ_DEVICE_UUID_KEY) || "").trim();
+    } catch {
+        storedUuid = "";
+    }
+
+    if (storedUuid) {
+        return storedUuid;
+    }
+
+    let generatedUuid = "";
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+        generatedUuid = crypto.randomUUID();
+    }
+    if (!generatedUuid) {
+        generatedUuid = `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+    }
+
+    try {
+        window.localStorage.setItem(BL_QZ_DEVICE_UUID_KEY, generatedUuid);
+    } catch {
+        // Ignore storage write failures; the generated uuid is still usable.
+    }
+    return generatedUuid;
+}
 
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
@@ -209,13 +238,6 @@ function findClosestPrinterName(configuredName, printers) {
         }
     }
 
-    for (const printerName of printers) {
-        const candidate = normalizePrinterNameForMatch(printerName);
-        if (candidate.includes(target) || target.includes(candidate)) {
-            return printerName;
-        }
-    }
-
     return "";
 }
 
@@ -345,6 +367,81 @@ function getTicketCopies(posConfig = {}) {
     const parsed = Number.parseInt(posConfig.qz_ticket_copies, 10);
     const copies = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
     return clamp(copies, 1, 10);
+}
+
+function getDevicePrinterRows(device) {
+    const rows = Array.isArray(device?.printer_ids) ? device.printer_ids : [];
+    return rows
+        .map((row) => ({
+            module_key: normalizePrinterName(row?.module_key),
+            printer_name: normalizePrinterName(row?.printer_name),
+            copies: clamp(Number.parseInt(row?.copies, 10) || 1, 1, 10),
+            force_raw: normalizeBoolean(row?.force_raw, false),
+            sequence: Number.parseInt(row?.sequence, 10) || 0,
+        }))
+        .filter((row) => row.printer_name)
+        .sort((left, right) => {
+            if (left.sequence !== right.sequence) {
+                return left.sequence - right.sequence;
+            }
+            return left.printer_name.localeCompare(right.printer_name, undefined, {
+                sensitivity: "base",
+            });
+        });
+}
+
+export async function resolvePrinterConfigFor(device, posConfig = {}, moduleKey = "") {
+    if (!device || !normalizeBoolean(device.qz_enabled, true)) {
+        return null;
+    }
+
+    const normalizedModuleKey = normalizePrinterName(moduleKey);
+    const rows = getDevicePrinterRows(device);
+    if (device.printer_mode === "per_module" && normalizedModuleKey) {
+        const moduleRow = rows.find((row) => row.module_key === normalizedModuleKey);
+        if (moduleRow) {
+            return {
+                printer_name: moduleRow.printer_name,
+                copies: moduleRow.copies,
+                force_raw: moduleRow.force_raw,
+            };
+        }
+    }
+
+    const globalPrinterName = normalizePrinterName(device.printer_name);
+    if (globalPrinterName) {
+        return {
+            printer_name: globalPrinterName,
+            copies: clamp(Number.parseInt(device?.copies, 10) || 1, 1, 10),
+            force_raw: normalizeBoolean(device?.force_raw, false),
+        };
+    }
+
+    const fallbackPrinterName = normalizePrinterName(posConfig?.bl_qz_fallback_printer_name);
+    if (fallbackPrinterName) {
+        return {
+            printer_name: fallbackPrinterName,
+            copies: 1,
+            force_raw: false,
+        };
+    }
+
+    try {
+        const qz = await ensureQzSecurityConfigured();
+        await ensureConnected(qz);
+        const defaultPrinter = normalizePrinterName(await qz.printers.getDefault());
+        if (defaultPrinter) {
+            return {
+                printer_name: defaultPrinter,
+                copies: 1,
+                force_raw: false,
+            };
+        }
+    } catch {
+        // If default printer cannot be resolved, the caller should fallback to native print.
+    }
+
+    return null;
 }
 
 export function applyEscPosGlobalCenterAlignment(rawEscPosPayload, options = {}) {
@@ -496,7 +593,11 @@ export async function sendPixelPdfToQzPrinter(pdfBase64Payload, posConfig = {}, 
 }
 
 export function isEscPosQzEnabled(posConfig = {}) {
-    return Boolean(posConfig && posConfig.receipt_print_escpos);
+    const deviceEnabled = posConfig?.bl_qz_device?.qz_enabled;
+    if (typeof deviceEnabled === "boolean") {
+        return deviceEnabled;
+    }
+    return false;
 }
 
 /**

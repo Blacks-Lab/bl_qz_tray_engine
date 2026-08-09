@@ -99,8 +99,36 @@ function parseSignatureResponse(response) {
     return response?.signature || "";
 }
 
+function getActivePosConfigId() {
+    const fromOdooGlobal = Number.parseInt(globalThis?.odoo?.pos_config_id, 10);
+    if (Number.isFinite(fromOdooGlobal) && fromOdooGlobal > 0) {
+        return fromOdooGlobal;
+    }
+
+    try {
+        const search = typeof window !== "undefined" ? window.location?.search || "" : "";
+        const fromQuery = Number.parseInt(new URLSearchParams(search).get("config_id"), 10);
+        if (Number.isFinite(fromQuery) && fromQuery > 0) {
+            return fromQuery;
+        }
+    } catch {
+        // Ignore URL parsing issues and fallback to empty payload.
+    }
+
+    return 0;
+}
+
+function buildSigningPayload(extra = {}) {
+    const payload = { ...extra };
+    const posConfigId = getActivePosConfigId();
+    if (posConfigId > 0) {
+        payload.pos_config_id = posConfigId;
+    }
+    return payload;
+}
+
 async function fetchCertificateAndAlgorithm() {
-    const response = await rpc(CERTIFICATE_ROUTE, {});
+    const response = await rpc(CERTIFICATE_ROUTE, buildSigningPayload());
     const payload = parseCertificateResponse(response);
 
     if (!payload.certificate || typeof payload.certificate !== "string") {
@@ -111,7 +139,10 @@ async function fetchCertificateAndAlgorithm() {
 }
 
 async function signContent(dataToSign) {
-    const response = await rpc(SIGN_ROUTE, { data_to_sign: dataToSign });
+    const response = await rpc(
+        SIGN_ROUTE,
+        buildSigningPayload({ data_to_sign: dataToSign })
+    );
     const signature = parseSignatureResponse(response);
 
     if (!signature || typeof signature !== "string") {

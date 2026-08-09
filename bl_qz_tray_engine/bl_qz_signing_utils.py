@@ -97,6 +97,35 @@ def has_signing_material(params):
     return bool(cert and key)
 
 
+def has_company_signing_material(company):
+    company.ensure_one()
+    cert = normalize_pem(company.bl_qz_certificate_pem)
+    key = normalize_pem(company.bl_qz_private_key_pem)
+    return bool(cert and key)
+
+
+def ensure_company_signing_material(company, force=False, base_url=""):
+    company.ensure_one()
+
+    cert = normalize_pem(company.bl_qz_certificate_pem)
+    key = normalize_pem(company.bl_qz_private_key_pem)
+    if cert and key and not force:
+        return cert, key
+
+    common_name = get_common_name_from_base_url(base_url or company.website or "")
+    cert, key = generate_self_signed_material(common_name)
+
+    company.sudo().write(
+        {
+            "bl_qz_certificate_pem": cert,
+            "bl_qz_private_key_pem": key,
+            "bl_qz_signing_enabled": True,
+        }
+    )
+
+    return cert, key
+
+
 def ensure_signing_material(params, force=False):
     cert = normalize_pem(params.get_param(QZ_PARAM_CERTIFICATE_PEM, ""))
     key = normalize_pem(params.get_param(QZ_PARAM_PRIVATE_KEY_PEM, ""))

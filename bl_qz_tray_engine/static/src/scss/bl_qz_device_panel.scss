@@ -1,0 +1,35 @@
+.o_bl_qz_device_panel {
+    border: 1px solid rgba(11, 87, 208, 0.14);
+
+    .bl_qz_detect_btn {
+        border: 0;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #0b57d0 0%, #1e88e5 100%);
+        color: #fff;
+        font-weight: 600;
+        box-shadow: 0 4px 10px rgba(11, 87, 208, 0.22);
+        transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+    }
+
+    .bl_qz_detect_btn:hover:not(:disabled),
+    .bl_qz_detect_btn:focus-visible:not(:disabled) {
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 16px rgba(11, 87, 208, 0.28);
+        filter: brightness(1.02);
+    }
+
+    .bl_qz_detect_btn:active:not(:disabled) {
+        transform: translateY(0);
+        box-shadow: 0 4px 10px rgba(11, 87, 208, 0.22);
+    }
+
+    .bl_qz_detect_btn:disabled {
+        opacity: 0.75;
+        box-shadow: none;
+    }
+
+    .bl_qz_detect_btn_row {
+        min-width: 122px;
+    }
+}
