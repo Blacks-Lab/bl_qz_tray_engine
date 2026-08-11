@@ -24,8 +24,25 @@ equipo. Ese UUID resuelve un registro `bl.qz.device` con:
 El dispositivo queda disponible en el POS como `this.pos.bl_qz_device` y también como
 `this.pos.config.bl_qz_device`.
 
+**El equipo no pertenece a ninguna compañía.** Una PC es una PC: el mismo registro se ve y se
+edita desde todas las compañías. Por eso una máquina que opera varias sigue siendo un solo equipo.
+
 La configuración se hace desde el backend, en la sección **Impresora ESC/POS QZ Tray**,
-accesible para todos los usuarios de POS.
+para el grupo `point_of_sale.group_pos_manager`.
+
+---
+
+## Qué impresora se usa
+
+Gana la primera que resuelva:
+
+1. La fila del módulo, si el equipo está en modo `per_module`
+2. `printer_name` del equipo
+3. `bl_qz_fallback_printer_name` del TPV
+4. La predeterminada del sistema en esa PC
+
+Dejar vacío el respaldo del TPV es la opción dinámica: cada PC imprime en su predeterminada sin
+configurar ningún nombre. Cargarlo fija el destino.
 
 ---
 
