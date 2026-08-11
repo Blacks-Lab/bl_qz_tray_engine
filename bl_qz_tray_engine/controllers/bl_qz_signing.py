@@ -58,7 +58,10 @@ class BlQzSigningController(http.Controller):
         device_candidate_id = self._to_int(device_id or request.params.get("device_id"))
         if device_candidate_id:
             device = env["bl.qz.device"].sudo().browse(device_candidate_id)
-            if device.exists():
+            # Un equipo puede no tener compania (es hardware, no pertenece a ninguna).
+            # En ese caso hay que seguir bajando en la cadena hasta env.company en vez de
+            # devolver un recordset vacio, que haria fallar la firma con "firma desactivada".
+            if device.exists() and device.company_id:
                 return device.company_id.sudo()
 
         return env.company.sudo()

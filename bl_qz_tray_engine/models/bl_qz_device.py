@@ -24,9 +24,15 @@ class BlQzDevice(models.Model):
     )
     company_id = fields.Many2one(
         "res.company",
-        required=True,
-        default=lambda self: self.env.company,
         index=True,
+        readonly=True,
+        string="Compania de alta",
+        help=(
+            "Solo informativo. Un equipo es una computadora fisica y no pertenece a una "
+            "compania: con este campo vacio el equipo es visible y editable desde todas, "
+            "que es lo que permite operar varias companias desde la misma PC. La regla de "
+            "registro ya contempla el valor vacio."
+        ),
     )
     qz_enabled = fields.Boolean(
         default=True,
@@ -76,14 +82,24 @@ class BlQzDevice(models.Model):
         if not resolved_uuid:
             return False
 
-        device = self.search([("device_uuid", "=", resolved_uuid)], limit=1)
+        # El equipo es una computadora fisica y se busca SOLO por su UUID.
+        #
+        # La busqueda va con sudo() y active_test=False a proposito: la regla multi-compania
+        # de bl.qz.device oculta el registro cuando se opera otra compania, y el archivado lo
+        # oculta tambien. Con la fila invisible el flujo caia al create y chocaba contra el
+        # indice unico global sobre device_uuid, dejando el panel muerto con un error de
+        # servidor. Buscar sin esos filtros es lo unico coherente con un indice que es global.
+        device = (
+            self.sudo()
+            .with_context(active_test=False)
+            .search([("device_uuid", "=", resolved_uuid)], limit=1)
+        )
         if not device:
             fallback_name = (default_name or "").strip() or f"Equipo {resolved_uuid[:8]}"
-            device = self.create(
+            device = self.sudo().create(
                 {
                     "device_uuid": resolved_uuid,
                     "name": fallback_name,
-                    "company_id": self.env.company.id,
                 }
             )
 
@@ -183,7 +199,7 @@ class BlQzDevice(models.Model):
             ))
 
         pos_config = self.env["pos.config"].search(
-            [("company_id", "=", self.company_id.id)],
+            [("company_id", "=", self.env.company.id)],
             limit=1,
         )
         if not pos_config:
@@ -193,7 +209,7 @@ class BlQzDevice(models.Model):
 
         printer_name, copies, force_raw = self._resolve_header_test_printer(pos_config)
 
-        company = self.company_id.sudo()
+        company = self.env.company.sudo()
         company_parent = company.parent_id.sudo()
         company_name = company_parent.name or company.name or ""
         company_vat = company_parent.vat or company.vat or ""
@@ -255,7 +271,7 @@ class BlQzDevice(models.Model):
         base_url = params.get_param("web.base.url", "")
         try:
             ensure_company_signing_material(
-                self.company_id.sudo(),
+                self.env.company.sudo(),
                 force=True,
                 base_url=base_url,
             )
@@ -282,7 +298,7 @@ class BlQzDevice(models.Model):
         self.ensure_one()
         return {
             "type": "ir.actions.act_url",
-            "url": f"/bl_qz/certificate/download?company_id={self.company_id.id}",
+            "url": f"/bl_qz/certificate/download?company_id={self.env.company.id}",
             "target": "new",
         }
 
