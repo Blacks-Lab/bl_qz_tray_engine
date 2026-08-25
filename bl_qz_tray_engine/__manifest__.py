@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "BlackLabs QZ Tray Engine",
-    "version": "18.0.1.7.0",
+    "version": "18.0.1.7.1",
     "author": "Ernesto Bernís - BlackLabs",
     "license": "LGPL-3",
     "category": "Point Of Sale",

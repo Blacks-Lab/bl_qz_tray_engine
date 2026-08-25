@@ -5,10 +5,11 @@
             <button
                 t-if="!props.readonly"
                 type="button"
-                class="btn btn-outline-secondary btn-sm ms-2"
+                class="btn btn-primary btn-sm ms-2 d-inline-flex align-items-center gap-1"
                 t-on-click.prevent="onDetectPrinters"
             >
-                Detectar impresoras
+                <i class="fa fa-search" aria-hidden="true"/>
+                <span>Detectar impresoras</span>
             </button>
         </xpath>
     </t>
