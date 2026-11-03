@@ -6,7 +6,7 @@ import { useService } from "@web/core/utils/hooks";
 import { Dialog } from "@web/core/dialog/dialog";
 import { CharField, charField } from "@web/views/fields/char/char_field";
 import { Component } from "@odoo/owl";
-import { ensureQzSecurityConfigured } from "./bl_qz_security";
+import { findQzPrinters, getQzDefaultPrinter } from "./bl_qz_security";
 
 function normalizePrinterName(value) {
     return typeof value === "string" ? value.trim() : "";
@@ -67,22 +67,16 @@ export class BlQzPrinterField extends CharField {
 
     async onDetectPrinters() {
         try {
-            const qz = await ensureQzSecurityConfigured();
-            if (!qz) {
-                this.notification.add(
-                    _t("QZ Tray no esta cargado en backend. Verifique web.assets_backend."),
-                    { type: "danger" }
-                );
-                return;
-            }
-
-            if (!qz.websocket?.isActive?.()) {
-                await qz.websocket.connect({ retries: 2, delay: 0.3 });
-            }
-
+            // La puerta unica de bl_qz_security.js conecta con tope de tiempo y
+            // reconecta sola si QZ Tray devuelve una conexion envenenada.
             const currentPrinter = normalizePrinterName(this.props.record.data[this.props.name]);
-            const detected = await qz.printers.find();
-            const defaultPrinter = normalizePrinterName(await qz.printers.getDefault());
+            const detected = await findQzPrinters();
+            let defaultPrinter = "";
+            try {
+                defaultPrinter = normalizePrinterName(await getQzDefaultPrinter());
+            } catch {
+                defaultPrinter = "";
+            }
             const printers = uniquePrinterNames([
                 ...normalizeFindResult(detected),
                 currentPrinter,

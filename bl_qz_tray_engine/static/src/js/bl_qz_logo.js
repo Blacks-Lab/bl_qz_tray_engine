@@ -422,14 +422,19 @@ export function buildArcaAuthorizationRasterBase64(options = {}) {
         }
     }
 
+    // Escala de impresion del bloque (1 = tamano de diseno). Se dibuja directo
+    // a la escala final para que el texto salga nitido en vez de reducirse luego.
+    const scale = Math.min(1, Math.max(0.5, Number(tuning.scale) || 1));
+
     const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
 
     const ctx = canvas.getContext("2d");
     if (!ctx) {
         return "";
     }
+    ctx.scale(scale, scale);
 
     const colors = tuning.colors || {};
     ctx.fillStyle = "#FFFFFF";

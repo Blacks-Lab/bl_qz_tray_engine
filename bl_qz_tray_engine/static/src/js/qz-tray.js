@@ -167,6 +167,14 @@ var qz = (function() {
 
                         //called during websocket close during setup
                         _qz.websocket.connection.onclose = function() {
+                            // BL_QZ_PATCH 1 (bl_qz_tray_engine): disconnect() sobre un socket que
+                            // todavia conectaba termina en este handler. openConnection (que es la que
+                            // resuelve la promesa de disconnect) nunca corrio, asi que se resuelve aca.
+                            var closingSetup = _qz.websocket.connection;
+                            if (closingSetup && closingSetup.promise) {
+                                closingSetup.promise.resolve();
+                                closingSetup.promise = undefined;
+                            }
                             // Safari compatibility fix to raise error event
                             if (_qz.websocket.connection && typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
                                 _qz.websocket.connection.onerror();
@@ -176,6 +184,14 @@ var qz = (function() {
                         //called for errors during setup (such as invalid ports), reject connect promise only if all ports have been tried
                         _qz.websocket.connection.onerror = function(evt) {
                             _qz.log.trace(evt);
+
+                            // BL_QZ_PATCH 1 (bl_qz_tray_engine): mismo caso por la rama de error, que
+                            // el navegador dispara antes que close al cerrar un socket que conecta.
+                            var failingSetup = _qz.websocket.connection;
+                            if (failingSetup && failingSetup.promise) {
+                                failingSetup.promise.resolve();
+                                failingSetup.promise = undefined;
+                            }
 
                             _qz.websocket.connection = null;
 
@@ -378,7 +394,29 @@ var qz = (function() {
                             //algorithm can be declared before a connection, check for incompatibilities now that we have one
                             _qz.compatible.algorithm(true);
                         }).then(function() {
+                            if (!_qz.websocket.connection) {
+                                throw new Error("Connection closed before response received");
+                            }
                             _qz.websocket.connection.sendData({ certificate: cert, promise: openPromise });
+                        }).catch(function(error) {
+                            // BL_QZ_PATCH 2 (bl_qz_tray_engine): sin este catch, un getVersion con error
+                            // (p. ej. el NullPointerException de una conexion que QZ Tray perdio) dejaba la
+                            // promesa de connect() pendiente para siempre y el rechazo sin capturar.
+                            _qz.log.warn("Certificate handshake failed", error);
+                            var failedSocket = _qz.websocket.connection;
+                            if (openPromise && typeof openPromise.reject === "function") {
+                                openPromise.reject(error);
+                            }
+                            // BL_QZ_PATCH 2: cerrar ese socket sin tocar el estado global (que ya puede
+                            // ser de una conexion nueva); si no, queda abierto hasta cerrar la pestania.
+                            if (failedSocket && failedSocket.readyState === _qz.tools.ws.OPEN) {
+                                failedSocket.onclose = null;
+                                failedSocket.onerror = null;
+                                failedSocket.onmessage = null;
+                                try {
+                                    failedSocket.close();
+                                } catch (ignore) {}
+                            }
                         });
                     }
 

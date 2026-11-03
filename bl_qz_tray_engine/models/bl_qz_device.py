@@ -70,6 +70,7 @@ class BlQzDevice(models.Model):
             ("retiro", 20),
             ("comanda", 30),
             ("mozo", 40),
+            ("pago_proveedor", 50),
         ]
 
     @api.model
@@ -314,7 +315,7 @@ class BlQzDevicePrinter(models.Model):
         ondelete="cascade",
         index=True,
     )
-    module_key = fields.Selection(selection="_bl_qz_module_keys", required=True)
+    module_key = fields.Selection(selection="_bl_qz_module_key_selection", required=True)
     printer_name = fields.Char()
     copies = fields.Integer(default=1)
     force_raw = fields.Boolean(default=False)
@@ -340,4 +341,21 @@ class BlQzDevicePrinter(models.Model):
             ("retiro", "retiro"),
             ("comanda", "comanda"),
             ("mozo", "mozo"),
+            # La usa el recibo de pago a proveedor de pos_cash_redesign. Sin declararla aca el
+            # dueno no puede asignarle impresora propia en los equipos "por modulo".
+            ("pago_proveedor", "Recibo de pago a proveedor"),
         ]
+
+    @api.model
+    def _bl_qz_module_key_selection(self):
+        # Deduplica las claves preservando el orden canonico. Los modulos que extienden
+        # bl.qz.device.printer pueden apendar con super() claves que el base ya declara,
+        # lo que duplicaba el desplegable del panel del equipo (F1).
+        seen = set()
+        result = []
+        for key, label in self._bl_qz_module_keys():
+            if key in seen:
+                continue
+            seen.add(key)
+            result.append((key, label))
+        return result

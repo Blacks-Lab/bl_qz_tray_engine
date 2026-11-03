@@ -7,7 +7,7 @@ import { useService } from "@web/core/utils/hooks";
 import { standardWidgetProps } from "@web/views/widgets/standard_widget_props";
 import { Component, onWillStart, onWillUnmount, useState } from "@odoo/owl";
 
-import { ensureQzSecurityConfigured } from "./bl_qz_security";
+import { findQzPrinters, getQzDefaultPrinter } from "./bl_qz_security";
 
 const DEVICE_UUID_KEY = "bl_qz_device_uuid";
 const MODULE_ROWS = [
@@ -15,6 +15,7 @@ const MODULE_ROWS = [
     { module_key: "retiro", label: "retiro", sequence: 20 },
     { module_key: "comanda", label: "comanda", sequence: 30 },
     { module_key: "mozo", label: "mozo", sequence: 40 },
+    { module_key: "pago_proveedor", label: "pago_proveedor", sequence: 50 },
 ];
 
 function normalizeString(value) {
@@ -356,13 +357,15 @@ export class BlQzDevicePanel extends Component {
     }
 
     async _pickDetectedPrinter(currentPrinter = "") {
-        const qz = await ensureQzSecurityConfigured();
-        if (!qz.websocket?.isActive?.()) {
-            await qz.websocket.connect({ retries: 2, delay: 0.3 });
+        // La puerta unica de bl_qz_security.js tiene tope de tiempo: el finally de
+        // onDetectPrinters siempre libera "detecting".
+        const detected = await findQzPrinters();
+        let defaultPrinter = "";
+        try {
+            defaultPrinter = await getQzDefaultPrinter();
+        } catch {
+            defaultPrinter = "";
         }
-
-        const detected = await qz.printers.find();
-        const defaultPrinter = await qz.printers.getDefault();
         const printers = normalizePrinterChoices(detected, currentPrinter, defaultPrinter);
 
         if (!printers.length) {

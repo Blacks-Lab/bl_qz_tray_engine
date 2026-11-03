@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class PosConfig(models.Model):
@@ -58,6 +59,15 @@ class PosConfig(models.Model):
     qz_body_block_width = fields.Integer("Ancho bloque cuerpo", default=42)
     qz_body_horizontal_offset = fields.Integer("Offset horizontal", default=0)
 
+    @api.constrains("qz_logo_scale_percent")
+    def _check_qz_logo_scale_percent(self):
+        # El frontend clampa esta escala al mismo rango (bl_qz_logo.js). Sin esta
+        # validacion se podia guardar un valor que nunca se aplicaba (E1).
+        for config in self:
+            value = config.qz_logo_scale_percent or 100
+            if not (50 <= value <= 300):
+                raise ValidationError(_("La escala de logo QZ debe estar entre 50 y 300."))
+
     @api.model
     def _load_pos_data_fields(self, config_id):
         fields_list = super()._load_pos_data_fields(config_id)
@@ -109,6 +119,7 @@ class PosConfig(models.Model):
             "bl_budget_company_name_text",
             "bl_budget_show_header_details",
             "bl_show_ticket_discount_summary",
+            "bl_hide_arca_block",
             "bl_enable_gift_receipt",
             "bl_gift_receipt_slogan",
             "bl_invoice_receipt_slogan",

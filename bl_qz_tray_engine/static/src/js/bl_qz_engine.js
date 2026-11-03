@@ -1,6 +1,14 @@
 /** @odoo-module */
 
-import { ensureQzSecurityConfigured } from "./bl_qz_security";
+import {
+    QZ_PRINT_TIMEOUT_MS,
+    describeQzConnectionError,
+    ensureQzConnection,
+    ensureQzSecurityConfigured,
+    findQzPrinters,
+    getQzDefaultPrinter,
+    runQzOperation,
+} from "./bl_qz_security";
 import { applyQzWorkstationOverrides } from "./bl_qz_settings";
 
 const CONNECT_OPTIONS = {
@@ -67,6 +75,11 @@ function normalizeQzErrorMessage(error) {
     }
     if (typeof error === "string") {
         return error.trim();
+    }
+    // Los errores de la puerta (bl_qz_security.js) traen el mensaje en espanol y
+    // el detalle crudo de QZ Tray aparte: la clasificacion usa el crudo.
+    if (typeof error.blQzDetail === "string" && error.blQzDetail) {
+        return error.blQzDetail.trim();
     }
     if (typeof error.message === "string") {
         return error.message.trim();
@@ -161,43 +174,13 @@ async function waitForQzReady(qz, options = {}) {
 
 async function reconnectSocket(qz) {
     clearQzPrinterCache();
-    try {
-        if (qz.websocket.isActive()) {
-            await qz.websocket.disconnect();
-        }
-    } catch {
-        // Best effort disconnect.
-    }
-
-    if (!connectPromise) {
-        connectPromise = qz.websocket.connect(CONNECT_OPTIONS).finally(() => {
-            connectPromise = null;
-        });
-    }
-    await connectPromise;
-    await waitForQzReady(qz);
+    // La puerta unica (bl_qz_security.js) reabre y verifica el socket si hace falta.
+    await ensureQzConnection();
+    return qz;
 }
 
 export function getFriendlyQzTrayErrorMessage(error, fallbackMessage = "") {
-    const detail = normalizeQzErrorMessage(error);
-    const hasHint = detail.toLowerCase().includes(QZ_TRAY_UNAVAILABLE_MESSAGE.toLowerCase());
-
-    if (hasHint) {
-        return fallbackMessage ? `${fallbackMessage}\n${detail}` : detail;
-    }
-
-    if (isLikelyQzTrayUnavailable(detail)) {
-        const unavailableMessage = buildQzTrayUnavailableMessage();
-        return fallbackMessage ? `${fallbackMessage}\n${unavailableMessage}` : unavailableMessage;
-    }
-
-    if (fallbackMessage && detail) {
-        return `${fallbackMessage}\n${detail}`;
-    }
-    if (fallbackMessage) {
-        return fallbackMessage;
-    }
-    return detail || "No se pudo completar la impresion con QZ Tray.";
+    return describeQzConnectionError(error, fallbackMessage);
 }
 
 function normalizePrinterName(value) {
@@ -242,48 +225,14 @@ function findClosestPrinterName(configuredName, printers) {
 }
 
 async function ensureConnected(qz) {
-    if (!qz.websocket.isActive()) {
-        qzReadyCacheTs = 0;
-        if (!connectPromise) {
-            connectPromise = qz.websocket.connect(CONNECT_OPTIONS).finally(() => {
-                connectPromise = null;
-            });
-        }
-
-        try {
-            await connectPromise;
-        } catch (error) {
-            const detail = normalizeQzErrorMessage(error);
-            if (!isTransientQzConnectionError(detail)) {
-                throw new Error(buildQzTrayUnavailableMessage(detail));
-            }
-        }
-    }
-
-    const now = Date.now();
-    if (now - qzReadyCacheTs < QZ_READY_CACHE_TTL_MS) {
-        return;
-    }
-
-    try {
-        await waitForQzReady(qz);
-        qzReadyCacheTs = Date.now();
-    } catch (error) {
-        qzReadyCacheTs = 0;
-        const detail = normalizeQzErrorMessage(error);
-        if (!isTransientQzConnectionError(detail)) {
-            throw new Error(buildQzTrayUnavailableMessage(detail));
-        }
-        await reconnectSocket(qz);
-        qzReadyCacheTs = Date.now();
-    }
+    // Conexion, topes, verificacion y reconexion viven en la puerta unica
+    // (bl_qz_security.js), compartida con el campo y el panel del backend.
+    await ensureQzConnection();
+    return qz;
 }
 
 export async function listQzTrayPrinters() {
-    const qz = await ensureQzSecurityConfigured();
-    await ensureConnected(qz);
-
-    const result = await qz.printers.find();
+    const result = await findQzPrinters();
     return normalizePrinterList(result);
 }
 
@@ -313,7 +262,7 @@ async function resolvePrinterNameUncached(qz, posConfig) {
     const configuredName = normalizePrinterName(posConfig?.qz_tray_printer_name);
     if (configuredName) {
         try {
-            const found = await qz.printers.find(configuredName);
+            const found = await findQzPrinters(configuredName);
             if (found) {
                 return found;
             }
@@ -332,7 +281,7 @@ async function resolvePrinterNameUncached(qz, posConfig) {
         }
 
         try {
-            const defaultPrinter = await qz.printers.getDefault();
+            const defaultPrinter = await getQzDefaultPrinter();
             if (defaultPrinter) {
                 return defaultPrinter;
             }
@@ -344,7 +293,7 @@ async function resolvePrinterNameUncached(qz, posConfig) {
     }
 
     try {
-        return await qz.printers.getDefault();
+        return await getQzDefaultPrinter();
     } catch {
         return "";
     }
@@ -427,9 +376,7 @@ export async function resolvePrinterConfigFor(device, posConfig = {}, moduleKey 
     }
 
     try {
-        const qz = await ensureQzSecurityConfigured();
-        await ensureConnected(qz);
-        const defaultPrinter = normalizePrinterName(await qz.printers.getDefault());
+        const defaultPrinter = normalizePrinterName(await getQzDefaultPrinter());
         if (defaultPrinter) {
             return {
                 printer_name: defaultPrinter,
@@ -501,14 +448,14 @@ export async function sendRawToQzPrinter(rawPayload, posConfig = {}, options = {
     const effectiveConfig = applyQzWorkstationOverrides(posConfig || {});
     const payload = normalizeRawPayload(rawPayload, options.applyGlobalCenterAlignment !== false);
     if (!payload.length) {
-        throw new Error("ESC/POS payload is empty.");
+        throw new Error("El contenido a imprimir esta vacio.");
     }
 
     await ensureConnected(qz);
 
     const printerName = await resolvePrinterName(qz, effectiveConfig);
     if (!printerName) {
-        throw new Error("No QZ Tray printer available.");
+        throw new Error("No hay una impresora de QZ Tray disponible en este equipo.");
     }
 
     const configOptions = {
@@ -528,9 +475,13 @@ export async function sendRawToQzPrinter(rawPayload, posConfig = {}, options = {
         configOptions.forceRaw = true;
     }
 
+    const printOptions = {
+        timeoutMs: QZ_PRINT_TIMEOUT_MS,
+        fallbackMessage: "No se pudo confirmar la impresion con QZ Tray.",
+    };
     let config = qz.configs.create(printerName, configOptions);
     try {
-        await qz.print(config, payload);
+        await runQzOperation((activeQz) => activeQz.print(config, payload), printOptions);
     } catch (error) {
         clearQzPrinterCache();
         if (!isTransientQzConnectionError(error)) {
@@ -540,7 +491,7 @@ export async function sendRawToQzPrinter(rawPayload, posConfig = {}, options = {
         await reconnectSocket(qz);
         const retryPrinterName = (await resolvePrinterName(qz, effectiveConfig)) || printerName;
         config = qz.configs.create(retryPrinterName, configOptions);
-        await qz.print(config, payload);
+        await runQzOperation((activeQz) => activeQz.print(config, payload), printOptions);
     }
 
     return true;
@@ -549,7 +500,7 @@ export async function sendRawToQzPrinter(rawPayload, posConfig = {}, options = {
 export async function sendPixelHtmlToQzPrinter(htmlPayload, posConfig = {}, options = {}) {
     const payload = String(htmlPayload || "").trim();
     if (!payload) {
-        throw new Error("HTML payload is empty.");
+        throw new Error("El contenido HTML a imprimir esta vacio.");
     }
 
     return sendRawToQzPrinter(
@@ -572,7 +523,7 @@ export async function sendPixelHtmlToQzPrinter(htmlPayload, posConfig = {}, opti
 export async function sendPixelPdfToQzPrinter(pdfBase64Payload, posConfig = {}, options = {}) {
     const payload = String(pdfBase64Payload || "").trim();
     if (!payload) {
-        throw new Error("PDF payload is empty.");
+        throw new Error("El PDF a imprimir esta vacio.");
     }
 
     return sendRawToQzPrinter(
@@ -607,8 +558,7 @@ export function isEscPosQzEnabled(posConfig = {}) {
  */
 export async function warmUpQzConnection(posConfig = {}) {
     try {
-        const qz = await ensureQzSecurityConfigured();
-        await ensureConnected(qz);
+        const qz = await ensureQzConnection();
         if (posConfig && Object.keys(posConfig).length) {
             await resolvePrinterName(qz, applyQzWorkstationOverrides(posConfig));
         }
