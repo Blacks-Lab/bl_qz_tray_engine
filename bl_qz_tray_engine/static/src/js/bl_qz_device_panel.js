@@ -169,6 +169,7 @@ export class BlQzDevicePanel extends Component {
     static template = "bl_qz_tray_engine.BlQzDevicePanel";
     static props = {
         ...standardWidgetProps,
+        basic: { type: Boolean, optional: true },
     };
 
     setup() {
@@ -201,6 +202,21 @@ export class BlQzDevicePanel extends Component {
 
     get isPerModule() {
         return this.state.printer_mode === "per_module";
+    }
+
+    // Numeracion de las opciones. En la configuracion base (basic) no esta el interruptor de
+    // habilitar QZ: lo cambia solo el administrador desde Ajustes generales.
+    get nums() {
+        const shift = this.props.basic ? 0 : 1;
+        const printer = 3 + shift;
+        return {
+            enabled: 1,
+            name: 1 + shift,
+            mode: 2 + shift,
+            printer,
+            force: printer + 1,
+            tests: this.isPerModule ? printer + 1 : printer + 2,
+        };
     }
 
     async _loadDevice() {
@@ -463,4 +479,5 @@ export class BlQzDevicePanel extends Component {
 
 registry.category("view_widgets").add("bl_qz_device_panel", {
     component: BlQzDevicePanel,
+    extractProps: ({ options }) => ({ basic: Boolean(options && options.basic) }),
 });

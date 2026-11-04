@@ -21,7 +21,7 @@
                                 </p>
                             </div>
                         </div>
-                        <widget name="bl_qz_device_panel"/>
+                        <widget name="bl_qz_device_panel" options="{'basic': True}"/>
                     </div>
                 </div>
             </xpath>

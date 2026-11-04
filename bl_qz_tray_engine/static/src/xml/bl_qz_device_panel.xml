@@ -14,8 +14,9 @@
                 </t>
 
                 <t t-else="">
+                    <t t-if="!props.basic">
                     <div class="bl-opt">
-                        <span class="bl-num bl-num-sm">1</span>
+                        <span class="bl-num bl-num-sm"><t t-esc="nums.enabled"/></span>
                         <div class="bl-opt-body">
                             <p class="bl-opt-label">Usar impresion por QZ Tray en este equipo<span class="bl-review-tag">pasa al primer lugar</span></p>
                             <p class="bl-opt-help">Si lo apagas, esta computadora imprime con el navegador y no se muestran las demas opciones.</p>
@@ -34,10 +35,12 @@
                             </div>
                         </div>
                     </div>
+                    </t>
+                    <div t-if="props.basic and !state.qz_enabled" class="alert alert-warning">QZ Tray esta apagado en este equipo y no imprime por QZ. Se vuelve a encender en Configuracion y ajustes, en Modulos BlackLabs.</div>
 
-                    <t t-if="state.qz_enabled">
+                    <t t-if="props.basic or state.qz_enabled">
                     <div class="bl-opt">
-                        <span class="bl-num bl-num-sm">2</span>
+                        <span class="bl-num bl-num-sm"><t t-esc="nums.name"/></span>
                         <div class="bl-opt-body">
                             <p class="bl-opt-label">Nombre de este equipo<span class="bl-review-tag">queda igual</span></p>
                             <p class="bl-opt-help">Es el nombre con el que aparece esta computadora en la lista de equipos.</p>
@@ -52,7 +55,7 @@
                     </div>
 
                     <div class="bl-opt">
-                        <span class="bl-num bl-num-sm">3</span>
+                        <span class="bl-num bl-num-sm"><t t-esc="nums.mode"/></span>
                         <div class="bl-opt-body">
                             <p class="bl-opt-label">Modo de impresora<span class="bl-review-tag">queda igual</span></p>
                             <p class="bl-opt-help">Una impresora para todos los comprobantes, o una distinta para cada uno.</p>
@@ -93,7 +96,7 @@
 
                     <t t-if="!isPerModule">
                         <div class="bl-opt">
-                            <span class="bl-num bl-num-sm">4</span>
+                            <span class="bl-num bl-num-sm"><t t-esc="nums.printer"/></span>
                             <div class="bl-opt-body">
                                 <p class="bl-opt-label">Impresora del equipo<span class="bl-review-tag">queda igual</span></p>
                                 <p class="bl-opt-help">La impresora que usa esta computadora para todos los comprobantes.</p>
@@ -128,7 +131,7 @@
                         </div>
 
                         <div class="bl-opt">
-                            <span class="bl-num bl-num-sm">5</span>
+                            <span class="bl-num bl-num-sm"><t t-esc="nums.force"/></span>
                             <div class="bl-opt-body">
                                 <p class="bl-opt-label">Force RAW<span class="bl-review-tag">queda igual</span></p>
                                 <p class="bl-opt-help">Enviar el ticket en crudo. Usalo solo si el ticket sale con simbolos raros.</p>
@@ -148,7 +151,7 @@
 
                     <t t-if="isPerModule">
                         <div class="bl-opt">
-                            <span class="bl-num bl-num-sm">4</span>
+                            <span class="bl-num bl-num-sm"><t t-esc="nums.printer"/></span>
                             <div class="bl-opt-body">
                                 <p class="bl-opt-label">Impresora para cada comprobante<span class="bl-review-tag">queda igual</span></p>
                                 <p class="bl-opt-help">Elegi la impresora de cada comprobante y, si hace falta, activa Force RAW.</p>
@@ -224,7 +227,7 @@
                     </t>
 
                     <div class="bl-opt">
-                        <span class="bl-num bl-num-sm"><t t-esc="isPerModule ? 5 : 6"/></span>
+                        <span class="bl-num bl-num-sm"><t t-esc="nums.tests"/></span>
                         <div class="bl-opt-body">
                             <p class="bl-opt-label">Pruebas y firma de QZ Tray<span class="bl-review-tag">queda igual</span></p>
                             <p class="bl-opt-help">Imprimi una cabecera de prueba y administra el certificado de firma.</p>
