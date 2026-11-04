@@ -5,14 +5,28 @@
         <field name="model">pos.config</field>
         <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
         <field name="arch" type="xml">
+            <!-- Seccion "Modulos BlackLabs" del formulario del Punto de Venta.
+                 Cada modulo BlackLabs agrega su tarjeta como un <div class="bl-card"> dentro de bl_modules_wrap_pos_config. -->
             <xpath expr="//sheet" position="inside">
-                <h2>Impresora ESC/POS QZ Tray</h2>
-                <div id="bl_qz_pos_config_section" class="row mt16 o_settings_container" invisible="context.get('pos_config_create_mode', False)">
-                    <setting id="bl_qz_device_panel_pos_config">
-                        <div class="content-group mt16">
-                            <widget name="bl_qz_device_panel"/>
+                <div id="bl_modules_wrap_pos_config" invisible="context.get('pos_config_create_mode', False)">
+                    <h2 class="bl-modules-title">Módulos BlackLabs</h2>
+                    <div class="bl-card bl-card-module" id="bl_qz_engine_card_pos_config">
+                        <div class="bl-card-head">
+                            <span class="bl-num">1</span>
+                            <div>
+                                <p class="bl-card-title">QZ Tray Engine</p>
+                                <p class="bl-card-sub">Impresión de tickets por QZ Tray.</p>
+                            </div>
                         </div>
-                    </setting>
+                        <div class="bl-opt">
+                            <div class="bl-opt-body">
+                                <p class="bl-opt-label">Impresoras de cada computadora
+                                    <span class="bl-review-tag">el panel se mudó a Ajustes generales</span>
+                                </p>
+                                <p class="bl-opt-help">La impresora de cada computadora y la firma de QZ Tray se configuran en Configuración y ajustes, al final, en Módulos BlackLabs → 1 QZ Tray Engine.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </xpath>
         </field>

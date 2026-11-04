@@ -5,10 +5,23 @@
         <field name="model">res.config.settings</field>
         <field name="inherit_id" ref="point_of_sale.res_config_settings_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//block[@id='pos_interface_section']" position="after">
-                <block id="bl_qz_engine_section" title="Impresora ESC/POS QZ Tray">
+            <!-- Seccion "Modulos BlackLabs": va al final de los ajustes del Punto de Venta.
+                 Cada modulo BlackLabs agrega su tarjeta como un <setting> dentro de este bloque. -->
+            <xpath expr="//block[@id='pos_inventory_section']" position="after">
+                <block id="bl_modules_section" title="Módulos BlackLabs">
                     <setting id="bl_qz_device_panel_settings">
-                        <widget name="bl_qz_device_panel"/>
+                        <div class="bl-card bl-card-module" id="bl_qz_engine_card">
+                            <div class="bl-card-head">
+                                <span class="bl-num">1</span>
+                                <div>
+                                    <p class="bl-card-title">QZ Tray Engine</p>
+                                    <p class="bl-card-sub">Impresión de tickets por QZ Tray en cada computadora.
+                                        <span class="bl-review-tag">se mudó desde el formulario del Punto de Venta: estaba en los dos lugares</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <widget name="bl_qz_device_panel"/>
+                        </div>
                     </setting>
                 </block>
             </xpath>

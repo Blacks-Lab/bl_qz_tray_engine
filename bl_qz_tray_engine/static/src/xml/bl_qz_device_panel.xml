@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="bl_qz_tray_engine.BlQzDevicePanel">
-        <div class="card border-0 shadow-sm o_bl_qz_device_panel">
-            <div class="card-body">
+        <div class="o_bl_qz_device_panel">
+            <div class="p-0">
                 <t t-if="state.loading">
                     <div class="text-muted">Cargando configuracion del equipo...</div>
                 </t>
@@ -14,9 +14,11 @@
                 </t>
 
                 <t t-else="">
-                    <div class="row g-3 align-items-center mb-3">
-                        <label class="col-lg-4 col-form-label fw-semibold">Configuracion de este equipo:</label>
-                        <div class="col-lg-8">
+                    <div class="bl-opt">
+                        <span class="bl-num bl-num-sm">1</span>
+                        <div class="bl-opt-body">
+                            <p class="bl-opt-label">Nombre de este equipo<span class="bl-review-tag">queda igual</span></p>
+                            <p class="bl-opt-help">Es el nombre con el que aparece esta computadora en la lista de equipos.</p>
                             <input
                                 type="text"
                                 class="form-control"
@@ -27,202 +29,230 @@
                         </div>
                     </div>
 
-                    <div class="form-check mb-3">
-                        <input
-                            class="form-check-input"
-                            type="checkbox"
-                            t-att-id="'bl_qz_enabled_' + (state.device and state.device.id or 0)"
-                            t-att-checked="state.qz_enabled"
-                            t-on-change="onEnabledChange"
-                            t-att-disabled="readonly or state.saving"
-                        />
-                        <label class="form-check-label" t-att-for="'bl_qz_enabled_' + (state.device and state.device.id or 0)">
-                            Usar impresion ESC/POS via QZ Tray
-                        </label>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold d-block">Modo:</label>
-                        <div class="d-flex gap-4 flex-wrap">
+                    <div class="bl-opt">
+                        <span class="bl-num bl-num-sm">2</span>
+                        <div class="bl-opt-body">
+                            <p class="bl-opt-label">Usar impresion ESC/POS via QZ Tray<span class="bl-review-tag">queda igual</span></p>
+                            <p class="bl-opt-help">Si lo apagas, esta computadora imprime con el navegador.</p>
                             <div class="form-check">
                                 <input
                                     class="form-check-input"
-                                    type="radio"
-                                    t-att-id="'bl_qz_mode_global_' + (state.device and state.device.id or 0)"
-                                    name="bl_qz_mode"
-                                    value="global"
-                                    t-att-checked="state.printer_mode === 'global'"
-                                    t-on-change="onModeGlobalChange"
+                                    type="checkbox"
+                                    t-att-id="'bl_qz_enabled_' + (state.device and state.device.id or 0)"
+                                    t-att-checked="state.qz_enabled"
+                                    t-on-change="onEnabledChange"
                                     t-att-disabled="readonly or state.saving"
                                 />
-                                <label class="form-check-label" t-att-for="'bl_qz_mode_global_' + (state.device and state.device.id or 0)">
-                                    Una impresora para todos los modulos
+                                <label class="form-check-label" t-att-for="'bl_qz_enabled_' + (state.device and state.device.id or 0)">
+                                    Activado en este equipo
                                 </label>
                             </div>
-                            <div class="form-check">
-                                <input
-                                    class="form-check-input"
-                                    type="radio"
-                                    t-att-id="'bl_qz_mode_module_' + (state.device and state.device.id or 0)"
-                                    name="bl_qz_mode"
-                                    value="per_module"
-                                    t-att-checked="state.printer_mode === 'per_module'"
-                                    t-on-change="onModePerModuleChange"
-                                    t-att-disabled="readonly or state.saving"
-                                />
-                                <label class="form-check-label" t-att-for="'bl_qz_mode_module_' + (state.device and state.device.id or 0)">
-                                    Impresora propia por modulo
-                                </label>
+                        </div>
+                    </div>
+
+                    <div class="bl-opt">
+                        <span class="bl-num bl-num-sm">3</span>
+                        <div class="bl-opt-body">
+                            <p class="bl-opt-label">Modo de impresora<span class="bl-review-tag">queda igual</span></p>
+                            <p class="bl-opt-help">Una impresora para todos los comprobantes, o una distinta para cada uno.</p>
+                            <div class="d-flex gap-4 flex-wrap">
+                                <div class="form-check">
+                                    <input
+                                        class="form-check-input"
+                                        type="radio"
+                                        t-att-id="'bl_qz_mode_global_' + (state.device and state.device.id or 0)"
+                                        name="bl_qz_mode"
+                                        value="global"
+                                        t-att-checked="state.printer_mode === 'global'"
+                                        t-on-change="onModeGlobalChange"
+                                        t-att-disabled="readonly or state.saving"
+                                    />
+                                    <label class="form-check-label" t-att-for="'bl_qz_mode_global_' + (state.device and state.device.id or 0)">
+                                        Una impresora para todos los modulos
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input
+                                        class="form-check-input"
+                                        type="radio"
+                                        t-att-id="'bl_qz_mode_module_' + (state.device and state.device.id or 0)"
+                                        name="bl_qz_mode"
+                                        value="per_module"
+                                        t-att-checked="state.printer_mode === 'per_module'"
+                                        t-on-change="onModePerModuleChange"
+                                        t-att-disabled="readonly or state.saving"
+                                    />
+                                    <label class="form-check-label" t-att-for="'bl_qz_mode_module_' + (state.device and state.device.id or 0)">
+                                        Impresora propia por modulo
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <t t-if="!isPerModule">
-                        <div class="row g-2 align-items-center mb-3">
-                            <label class="col-lg-4 col-form-label fw-semibold">Impresora del equipo:</label>
-                            <div class="col-lg-8 d-flex gap-2 flex-wrap">
-                                <input
-                                    type="text"
-                                    class="form-control"
-                                    t-att-value="state.printer_name"
-                                    t-on-change="onGlobalPrinterChange"
-                                    t-att-readonly="readonly or state.saving"
-                                />
-                                <button
-                                    type="button"
-                                    class="btn bl_qz_detect_btn"
-                                    t-on-click="onDetectPrinters"
-                                    t-att-disabled="readonly or state.saving or state.detecting"
-                                >
-                                    <t t-if="state.detecting">
-                                        <i class="fa fa-spinner fa-spin me-1"/>
-                                        Buscando...
-                                    </t>
-                                    <t t-else="">
-                                        <i class="fa fa-magic me-1"/>
-                                        Detectar impresoras
-                                    </t>
-                                </button>
+                        <div class="bl-opt">
+                            <span class="bl-num bl-num-sm">4</span>
+                            <div class="bl-opt-body">
+                                <p class="bl-opt-label">Impresora del equipo<span class="bl-review-tag">queda igual</span></p>
+                                <p class="bl-opt-help">La impresora que usa esta computadora para todos los comprobantes.</p>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        t-att-value="state.printer_name"
+                                        t-on-change="onGlobalPrinterChange"
+                                        t-att-readonly="readonly or state.saving"
+                                    />
+                                    <button
+                                        type="button"
+                                        class="btn bl_qz_detect_btn"
+                                        t-on-click="onDetectPrinters"
+                                        t-att-disabled="readonly or state.saving or state.detecting"
+                                    >
+                                        <t t-if="state.detecting">
+                                            <i class="fa fa-spinner fa-spin me-1"/>
+                                            Buscando...
+                                        </t>
+                                        <t t-else="">
+                                            <i class="fa fa-magic me-1"/>
+                                            Detectar impresoras
+                                        </t>
+                                    </button>
+                                </div>
+                                <p class="bl-opt-help mt-2">
+                                    <span class="bl-review-tag">se quito: "Copias" del equipo (valia 1 y no cambiaba lo que se imprime)</span>
+                                </p>
                             </div>
                         </div>
 
-                        <div class="row g-3 align-items-center mb-3">
-                            <label class="col-lg-4 col-form-label fw-semibold">Copias:</label>
-                            <div class="col-lg-8">
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="10"
-                                    class="form-control"
-                                    t-att-value="state.copies"
-                                    t-on-change="onGlobalCopiesChange"
-                                    t-att-readonly="readonly or state.saving"
-                                />
-                            </div>
-                        </div>
-
-                        <div class="row g-3 align-items-center mb-4">
-                            <label class="col-lg-4 col-form-label fw-semibold">Force RAW:</label>
-                            <div class="col-lg-8">
-                                <input
-                                    type="checkbox"
-                                    class="form-check-input"
-                                    t-att-checked="state.force_raw"
-                                    t-on-change="onGlobalForceRawChange"
-                                    t-att-disabled="readonly or state.saving"
-                                />
+                        <div class="bl-opt">
+                            <span class="bl-num bl-num-sm">5</span>
+                            <div class="bl-opt-body">
+                                <p class="bl-opt-label">Force RAW<span class="bl-review-tag">queda igual</span></p>
+                                <p class="bl-opt-help">Enviar el ticket en crudo. Usalo solo si el ticket sale con simbolos raros.</p>
+                                <div class="form-check">
+                                    <input
+                                        type="checkbox"
+                                        class="form-check-input"
+                                        t-att-checked="state.force_raw"
+                                        t-on-change="onGlobalForceRawChange"
+                                        t-att-disabled="readonly or state.saving"
+                                    />
+                                    <label class="form-check-label">Activado</label>
+                                </div>
                             </div>
                         </div>
                     </t>
 
                     <t t-if="isPerModule">
-                        <div class="table-responsive mb-4">
-                            <table class="table table-sm align-middle mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Modulo</th>
-                                        <th>Impresora + Detectar</th>
-                                        <th class="text-center">Copias</th>
-                                        <th class="text-center">Force RAW</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr t-foreach="state.module_rows" t-as="row" t-key="row.module_key">
-                                        <td class="fw-semibold text-capitalize"><t t-esc="row.label"/></td>
-                                        <td>
-                                            <div class="d-flex gap-2 flex-wrap">
-                                                <input
-                                                    type="text"
-                                                    class="form-control"
-                                                    t-att-data-module-key="row.module_key"
-                                                    t-att-value="row.printer_name"
-                                                    t-on-change="onModulePrinterChange"
-                                                    t-att-readonly="readonly or state.saving"
-                                                />
-                                                <button
-                                                    type="button"
-                                                    class="btn bl_qz_detect_btn bl_qz_detect_btn_row"
-                                                    t-att-data-module-key="row.module_key"
-                                                    t-on-click="onDetectModulePrinter"
-                                                    t-att-disabled="readonly or state.saving or state.detecting"
-                                                >
-                                                    <i class="fa fa-magic me-1"/>
-                                                    Detectar
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td style="max-width: 120px;">
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                max="10"
-                                                class="form-control text-center"
-                                                t-att-data-module-key="row.module_key"
-                                                t-att-value="row.copies"
-                                                t-on-change="onModuleCopiesChange"
-                                                t-att-readonly="readonly or state.saving"
-                                            />
-                                        </td>
-                                        <td class="text-center">
-                                            <input
-                                                type="checkbox"
-                                                class="form-check-input"
-                                                t-att-data-module-key="row.module_key"
-                                                t-att-checked="row.force_raw"
-                                                t-on-change="onModuleForceRawChange"
-                                                t-att-disabled="readonly or state.saving"
-                                            />
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="bl-opt">
+                            <span class="bl-num bl-num-sm">4</span>
+                            <div class="bl-opt-body">
+                                <p class="bl-opt-label">Impresora para cada comprobante<span class="bl-review-tag">queda igual</span></p>
+                                <p class="bl-opt-help">Elegi la impresora de cada comprobante y, si hace falta, activa Force RAW.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Modulo</th>
+                                                <th>Impresora + Detectar</th>
+                                                <th class="text-center">Copias</th>
+                                                <th class="text-center">Force RAW</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr t-foreach="state.module_rows" t-as="row" t-key="row.module_key">
+                                                <td class="fw-semibold text-capitalize"><t t-esc="row.label"/></td>
+                                                <td>
+                                                    <div class="d-flex gap-2 flex-wrap">
+                                                        <input
+                                                            type="text"
+                                                            class="form-control"
+                                                            t-att-data-module-key="row.module_key"
+                                                            t-att-value="row.printer_name"
+                                                            t-on-change="onModulePrinterChange"
+                                                            t-att-readonly="readonly or state.saving"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            class="btn bl_qz_detect_btn bl_qz_detect_btn_row"
+                                                            t-att-data-module-key="row.module_key"
+                                                            t-on-click="onDetectModulePrinter"
+                                                            t-att-disabled="readonly or state.saving or state.detecting"
+                                                        >
+                                                            <i class="fa fa-magic me-1"/>
+                                                            Detectar
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td style="max-width: 120px;" class="text-center">
+                                                    <input
+                                                        t-if="row.module_key === 'pago_proveedor'"
+                                                        type="number"
+                                                        min="1"
+                                                        max="10"
+                                                        class="form-control text-center"
+                                                        t-att-data-module-key="row.module_key"
+                                                        t-att-value="row.copies"
+                                                        t-on-change="onModuleCopiesChange"
+                                                        t-att-readonly="readonly or state.saving"
+                                                    />
+                                                    <span t-else="" class="text-muted">&#8212;</span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        class="form-check-input"
+                                                        t-att-data-module-key="row.module_key"
+                                                        t-att-checked="row.force_raw"
+                                                        t-on-change="onModuleForceRawChange"
+                                                        t-att-disabled="readonly or state.saving"
+                                                    />
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p class="bl-opt-help mt-2">
+                                    Solo el recibo de pago a proveedor usa copias desde aca. Las copias del ticket de venta se cargan en "Copias del comprobante" (formulario del Punto de Venta).
+                                    <span class="bl-review-tag">se quito: "Copias" de los demas comprobantes y la del equipo (valian 1)</span>
+                                </p>
+                            </div>
                         </div>
                     </t>
 
-                    <div class="d-flex gap-2 flex-wrap">
-                        <button
-                            type="button"
-                            class="btn btn-secondary"
-                            t-on-click="onPrintHeaderTest"
-                        >
-                            Imprimir cabecera de prueba
-                        </button>
-                        <button
-                            t-if="state.canDownload"
-                            type="button"
-                            class="btn btn-secondary"
-                            t-on-click="onDownloadCertificate"
-                        >
-                            Descargar certificado (.pem)
-                        </button>
-                        <button
-                            t-if="state.canGenerate"
-                            type="button"
-                            class="btn btn-secondary"
-                            t-on-click="onGenerateCertificate"
-                        >
-                            Generar / Renovar certificado
-                        </button>
+                    <div class="bl-opt">
+                        <span class="bl-num bl-num-sm"><t t-esc="isPerModule ? 5 : 6"/></span>
+                        <div class="bl-opt-body">
+                            <p class="bl-opt-label">Pruebas y firma de QZ Tray<span class="bl-review-tag">queda igual</span></p>
+                            <p class="bl-opt-help">Imprimi una cabecera de prueba y administra el certificado de firma.</p>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    t-on-click="onPrintHeaderTest"
+                                >
+                                    Imprimir cabecera de prueba
+                                </button>
+                                <button
+                                    t-if="state.canDownload"
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    t-on-click="onDownloadCertificate"
+                                >
+                                    Descargar certificado (.pem)
+                                </button>
+                                <button
+                                    t-if="state.canGenerate"
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    t-on-click="onGenerateCertificate"
+                                >
+                                    Generar / Renovar certificado
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </t>
             </div>

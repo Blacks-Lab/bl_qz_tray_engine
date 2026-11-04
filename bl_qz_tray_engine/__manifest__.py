@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "BlackLabs QZ Tray Engine",
-    "version": "18.0.1.7.7",
+    "version": "18.0.1.7.8",
     "author": "Ernesto Bernís - BlackLabs",
     "license": "LGPL-3",
     "category": "Point Of Sale",
@@ -22,6 +22,7 @@
             "/bl_qz_tray_engine/static/src/js/bl_qz_device_panel.js",
             "/bl_qz_tray_engine/static/src/js/bl_qz_printer_field.js",
             "/bl_qz_tray_engine/static/src/scss/bl_qz_device_panel.scss",
+            "/bl_qz_tray_engine/static/src/scss/bl_modules_section.scss",
             "/bl_qz_tray_engine/static/src/xml/bl_qz_device_panel.xml",
             "/bl_qz_tray_engine/static/src/xml/bl_qz_printer_field.xml",
             "/bl_qz_tray_engine/static/src/js/bl_qz_logo.js",

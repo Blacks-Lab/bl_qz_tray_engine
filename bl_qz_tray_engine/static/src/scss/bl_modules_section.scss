@@ -1,0 +1,156 @@
+// Seccion "Modulos BlackLabs": recuadro general + una tarjeta por modulo.
+// TODOS los colores salen de este bloque: para cambiar el aspecto, se cambia aca.
+:root {
+    --bl-accent: var(--bs-primary, #714b67);
+    --bl-accent-soft: #{"color-mix(in srgb, var(--bl-accent) 10%, transparent)"};
+    --bl-accent-line: #{"color-mix(in srgb, var(--bl-accent) 35%, transparent)"};
+    --bl-border: var(--bs-border-color, #dee2e6);
+    --bl-text-muted: var(--bs-secondary-color, #6c757d);
+    --bl-card-bg: var(--bs-body-bg, #fff);
+    // Etiquetas "antes: ..." para revisar lo que se movio. Poner "none" para ocultarlas todas.
+    --bl-review-display: inline-block;
+}
+
+.bl-modules-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 1.75rem 0 0.25rem;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--bl-accent);
+
+    &::before {
+        content: "";
+        width: 6px;
+        height: 1.6rem;
+        border-radius: 3px;
+        background: var(--bl-accent);
+    }
+}
+
+.bl-card {
+    width: 100%;
+    margin: 0.75rem 0;
+    padding: 1.1rem 1.4rem;
+    border: 1px solid var(--bl-border);
+    border-radius: 12px;
+    background: var(--bl-card-bg);
+
+    &.bl-card-module {
+        border-color: var(--bl-accent-line);
+    }
+
+    .o_bl_qz_device_panel {
+        border: 0;
+    }
+}
+
+.bl-card-head {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid var(--bl-border);
+}
+
+.bl-num {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--bl-accent);
+    color: #fff;
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1;
+
+    &.bl-num-sm {
+        width: 28px;
+        height: 28px;
+        margin-top: 2px;
+        font-size: 0.95rem;
+    }
+}
+
+.bl-card-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.bl-card-sub {
+    margin: 0.1rem 0 0;
+    font-size: 0.8125rem;
+    color: var(--bl-text-muted);
+}
+
+.bl-opt {
+    display: flex;
+    gap: 0.85rem;
+    padding: 0.85rem 0;
+    border-top: 1px solid var(--bl-border);
+
+    &:first-child {
+        border-top: 0;
+    }
+}
+
+.bl-card-head + .bl-opt {
+    border-top: 0;
+}
+
+.bl-opt-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.bl-opt-label {
+    margin: 0;
+    font-weight: 600;
+}
+
+.bl-opt-help {
+    margin: 0.1rem 0 0.4rem;
+    font-size: 0.8125rem;
+    color: var(--bl-text-muted);
+}
+
+.bl-review-tag {
+    display: var(--bl-review-display);
+    margin-left: 0.5rem;
+    padding: 0.05rem 0.55rem;
+    border: 1px solid var(--bl-accent-line);
+    border-radius: 999px;
+    background: var(--bl-accent-soft);
+    color: var(--bl-accent);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    vertical-align: middle;
+}
+
+// Un <setting> que contiene una tarjeta ocupa todo el ancho (por defecto Odoo lo pone a media pantalla).
+.o_setting_box.col-lg-6:has(.bl-card) {
+    width: 100%;
+    flex: 0 0 100%;
+}
+
+
+// El boton "Detectar" del panel usaba un azul propio: dentro de la tarjeta toma el acento.
+.bl-card .bl_qz_detect_btn {
+    background: var(--bl-accent);
+    box-shadow: none;
+    border-radius: 8px;
+}
+
+.bl-card .bl_qz_detect_btn:hover:not(:disabled),
+.bl-card .bl_qz_detect_btn:focus-visible:not(:disabled) {
+    box-shadow: none;
+    transform: none;
+    filter: brightness(1.12);
+}

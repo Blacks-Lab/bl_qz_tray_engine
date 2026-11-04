@@ -20,7 +20,7 @@
                                 <list editable="bottom">
                                     <field name="module_key"/>
                                     <field name="printer_name" widget="bl_qz_printer"/>
-                                    <field name="copies"/>
+                                    <field name="copies" invisible="module_key != 'pago_proveedor'"/>
                                     <field name="force_raw"/>
                                     <field name="sequence"/>
                                 </list>
