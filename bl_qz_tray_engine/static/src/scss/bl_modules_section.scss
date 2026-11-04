@@ -1,7 +1,7 @@
 // Seccion "Modulos BlackLabs": recuadro general + una tarjeta por modulo.
 // TODOS los colores salen de este bloque: para cambiar el aspecto, se cambia aca.
 :root {
-    --bl-accent: var(--bs-primary, #714b67);
+    --bl-accent: #1a73e8;
     --bl-accent-soft: #{"color-mix(in srgb, var(--bl-accent) 10%, transparent)"};
     --bl-accent-line: #{"color-mix(in srgb, var(--bl-accent) 35%, transparent)"};
     --bl-border: var(--bs-border-color, #dee2e6);
