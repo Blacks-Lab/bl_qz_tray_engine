@@ -50,6 +50,15 @@ class BlQzDevice(models.Model):
     )
     printer_name = fields.Char(string="Impresora del equipo", tracking=True)
     copies = fields.Integer(default=1, string="Copias")
+    copies_all = fields.Boolean(
+        default=False,
+        string="Misma cantidad de copias para todos los comprobantes",
+        help=(
+            "Solo con el modo 'Una impresora para todos los modulos'. Si esta activo, "
+            "todos los comprobantes de este equipo imprimen la cantidad de 'Copias'. "
+            "Apagado, cada modulo usa su propia cantidad."
+        ),
+    )
     force_raw = fields.Boolean(default=False, string="Force RAW")
     printer_ids = fields.One2many("bl.qz.device.printer", "device_id")
     last_seen = fields.Datetime(readonly=True)
@@ -135,6 +144,7 @@ class BlQzDevice(models.Model):
             "printer_mode": device.printer_mode,
             "printer_name": device.printer_name,
             "copies": device.copies,
+            "copies_all": bool(device.copies_all),
             "force_raw": bool(device.force_raw),
             "company_id": device.company_id.id,
             "can_download_certificate": self.env.user.has_group("point_of_sale.group_pos_manager"),
@@ -159,7 +169,10 @@ class BlQzDevice(models.Model):
             ))
 
         printer_name = ""
-        copies = max(1, int(self.copies or 1))
+        if self.copies_all and self.printer_mode != "per_module":
+            copies = max(1, int(self.copies or 1))
+        else:
+            copies = 1
         force_raw = bool(self.force_raw)
 
         if self.printer_mode == "per_module":

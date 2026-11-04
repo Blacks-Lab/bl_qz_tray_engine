@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="bl_qz_tray_engine.BlQzCopiesNotice">
+        <div t-ref="root" class="bl-copies-notice">
+            <p t-if="state.locked" class="bl-lock-note">
+                <i class="fa fa-lock me-1" aria-hidden="true"/>
+                En esta computadora la cantidad la define QZ Tray Engine:
+                <strong><t t-esc="state.copies"/></strong>
+                para todos los comprobantes. Se cambia en Configuración y ajustes, Módulos BlackLabs, QZ Tray Engine.
+            </p>
+        </div>
+    </t>
+</templates>

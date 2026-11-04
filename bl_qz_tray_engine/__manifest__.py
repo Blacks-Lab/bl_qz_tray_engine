@@ -25,6 +25,8 @@
             "/bl_qz_tray_engine/static/src/scss/bl_modules_section.scss",
             "/bl_qz_tray_engine/static/src/xml/bl_qz_device_panel.xml",
             "/bl_qz_tray_engine/static/src/xml/bl_qz_printer_field.xml",
+            "/bl_qz_tray_engine/static/src/js/bl_qz_copies_notice.js",
+            "/bl_qz_tray_engine/static/src/xml/bl_qz_copies_notice.xml",
             "/bl_qz_tray_engine/static/src/js/bl_qz_logo.js",
         ],
         "point_of_sale._assets_pos": [

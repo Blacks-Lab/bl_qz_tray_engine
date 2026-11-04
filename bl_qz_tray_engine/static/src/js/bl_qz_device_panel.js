@@ -191,6 +191,7 @@ export class BlQzDevicePanel extends Component {
             printer_mode: "global",
             printer_name: "",
             copies: 1,
+            copies_all: false,
             force_raw: false,
             module_rows: normalizePrinterRows([]),
         });
@@ -214,8 +215,9 @@ export class BlQzDevicePanel extends Component {
             name: 1 + shift,
             mode: 2 + shift,
             printer,
-            force: printer + 1,
-            tests: this.isPerModule ? printer + 1 : printer + 2,
+            copies: printer + 1,
+            force: printer + 2,
+            tests: this.isPerModule ? printer + 1 : printer + 3,
         };
     }
 
@@ -244,6 +246,7 @@ export class BlQzDevicePanel extends Component {
         this.state.printer_mode = device?.printer_mode === "per_module" ? "per_module" : "global";
         this.state.printer_name = normalizeString(device?.printer_name);
         this.state.copies = parseCopies(device?.copies);
+        this.state.copies_all = Boolean(device?.copies_all);
         this.state.force_raw = Boolean(device?.force_raw);
         this.state.canDownload = Boolean(device?.can_download_certificate);
         this.state.canGenerate = Boolean(device?.can_generate_certificate);
@@ -283,6 +286,7 @@ export class BlQzDevicePanel extends Component {
                 printer_mode: this.state.printer_mode,
                 printer_name: normalizeString(this.state.printer_name),
                 copies: parseCopies(this.state.copies),
+                copies_all: Boolean(this.state.copies_all),
                 force_raw: Boolean(this.state.force_raw),
                 printer_ids: this._buildPrinterCommands(),
             });
@@ -323,6 +327,11 @@ export class BlQzDevicePanel extends Component {
 
     onGlobalPrinterChange(ev) {
         this.state.printer_name = normalizeString(ev.target.value);
+        this._saveDevice();
+    }
+
+    onCopiesAllChange(ev) {
+        this.state.copies_all = Boolean(ev.target?.checked);
         this._saveDevice();
     }
 

@@ -344,6 +344,13 @@ export async function resolvePrinterConfigFor(device, posConfig = {}, moduleKey 
         return null;
     }
 
+    // "Misma cantidad para todos": solo con una impresora para todos los modulos.
+    const copiesAll =
+        device.printer_mode !== "per_module" && normalizeBoolean(device.copies_all, false);
+    const sharedCopies = copiesAll
+        ? clamp(Number.parseInt(device?.copies, 10) || 1, 1, 10)
+        : 1;
+
     const normalizedModuleKey = normalizePrinterName(moduleKey);
     const rows = getDevicePrinterRows(device);
     if (device.printer_mode === "per_module" && normalizedModuleKey) {
@@ -352,6 +359,7 @@ export async function resolvePrinterConfigFor(device, posConfig = {}, moduleKey 
             return {
                 printer_name: moduleRow.printer_name,
                 copies: moduleRow.copies,
+                copies_all: false,
                 force_raw: moduleRow.force_raw,
             };
         }
@@ -361,7 +369,8 @@ export async function resolvePrinterConfigFor(device, posConfig = {}, moduleKey 
     if (globalPrinterName) {
         return {
             printer_name: globalPrinterName,
-            copies: clamp(Number.parseInt(device?.copies, 10) || 1, 1, 10),
+            copies: sharedCopies,
+            copies_all: copiesAll,
             force_raw: normalizeBoolean(device?.force_raw, false),
         };
     }
@@ -370,7 +379,8 @@ export async function resolvePrinterConfigFor(device, posConfig = {}, moduleKey 
     if (fallbackPrinterName) {
         return {
             printer_name: fallbackPrinterName,
-            copies: 1,
+            copies: sharedCopies,
+            copies_all: copiesAll,
             force_raw: false,
         };
     }
@@ -380,7 +390,8 @@ export async function resolvePrinterConfigFor(device, posConfig = {}, moduleKey 
         if (defaultPrinter) {
             return {
                 printer_name: defaultPrinter,
-                copies: 1,
+                copies: sharedCopies,
+                copies_all: copiesAll,
                 force_raw: false,
             };
         }

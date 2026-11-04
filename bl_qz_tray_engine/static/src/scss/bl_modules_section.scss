@@ -1,7 +1,7 @@
 // Seccion "Modulos BlackLabs": recuadro general + una tarjeta por modulo.
 // TODOS los colores salen de este bloque: para cambiar el aspecto, se cambia aca.
 :root {
-    --bl-accent: #1a73e8;
+    --bl-accent: #4a5f8f;
     --bl-accent-soft: #{"color-mix(in srgb, var(--bl-accent) 10%, transparent)"};
     --bl-accent-line: #{"color-mix(in srgb, var(--bl-accent) 35%, transparent)"};
     --bl-border: var(--bs-border-color, #dee2e6);
@@ -153,4 +153,47 @@
     box-shadow: none;
     transform: none;
     filter: brightness(1.12);
+}
+
+// Interruptor (toggle) de las opciones: azul del acento cuando esta encendido, gris apagado.
+.bl-switch {
+    min-height: 1.8rem;
+
+    .form-check-input {
+        width: 2.75em;
+        height: 1.5em;
+        cursor: pointer;
+    }
+
+    .form-check-input:checked {
+        border-color: var(--bl-accent);
+        background-color: var(--bl-accent);
+    }
+
+    .form-check-input:focus {
+        border-color: var(--bl-accent);
+        box-shadow: 0 0 0 0.2rem var(--bl-accent-line);
+    }
+
+    .form-check-label {
+        margin-left: 0.4rem;
+        font-weight: 500;
+        cursor: pointer;
+    }
+}
+
+// Campo de copias de un modulo apagado porque QZ Tray Engine define la cantidad en esta computadora.
+.bl-copies-input.bl-locked {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.bl-lock-note {
+    margin: 0.4rem 0 0;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--bl-accent-line);
+    border-radius: 8px;
+    background: var(--bl-accent-soft);
+    color: var(--bl-accent);
+    font-size: 0.8125rem;
 }

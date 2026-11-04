@@ -124,8 +124,44 @@
                                         </t>
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div class="bl-opt">
+                            <span class="bl-num bl-num-sm"><t t-esc="nums.copies"/></span>
+                            <div class="bl-opt-body">
+                                <p class="bl-opt-label">Cantidad de copias<span class="bl-review-tag">vuelve, ahora con interruptor</span></p>
+                                <p class="bl-opt-help">Encendido: todos los comprobantes de esta computadora imprimen la misma cantidad. Apagado: cada modulo usa su propia cantidad.</p>
+                                <div class="form-check form-switch bl-switch">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        role="switch"
+                                        t-att-id="'bl_qz_copies_all_' + (state.device and state.device.id or 0)"
+                                        t-att-checked="state.copies_all"
+                                        t-on-change="onCopiesAllChange"
+                                        t-att-disabled="readonly or state.saving"
+                                    />
+                                    <label class="form-check-label" t-att-for="'bl_qz_copies_all_' + (state.device and state.device.id or 0)">
+                                        Misma cantidad de copias para todos los comprobantes
+                                    </label>
+                                </div>
+                                <div class="d-flex align-items-center gap-3 mt-2">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="10"
+                                        class="form-control"
+                                        style="max-width: 110px;"
+                                        t-att-value="state.copies"
+                                        t-on-change="onGlobalCopiesChange"
+                                        t-att-disabled="readonly or state.saving or !state.copies_all"
+                                    />
+                                    <span t-if="state.copies_all" class="bl-opt-help m-0">Todos los comprobantes de esta computadora imprimen esta cantidad.</span>
+                                    <span t-else="" class="bl-opt-help m-0">Apagado: cada comprobante usa las copias de su modulo (por ejemplo, "Copias del comprobante" en el ticket de venta).</span>
+                                </div>
                                 <p class="bl-opt-help mt-2">
-                                    <span class="bl-review-tag">se quito: "Copias" del equipo (valia 1 y no cambiaba lo que se imprime)</span>
+                                    <span class="bl-review-tag">por ahora lo respetan el ticket de venta y el pago a proveedor; el resto de los modulos se suma uno por uno</span>
                                 </p>
                             </div>
                         </div>
@@ -219,8 +255,8 @@
                                     </table>
                                 </div>
                                 <p class="bl-opt-help mt-2">
-                                    Solo el recibo de pago a proveedor usa copias desde aca. Las copias del ticket de venta se cargan en "Copias del comprobante" (formulario del Punto de Venta).
-                                    <span class="bl-review-tag">se quito: "Copias" de los demas comprobantes y la del equipo (valian 1)</span>
+                                    Con una impresora por modulo, cada comprobante usa las copias de su modulo (por ejemplo, "Copias del comprobante" en el ticket de venta). Solo el recibo de pago a proveedor toma su cantidad de esta tabla.
+                                    <span class="bl-review-tag">se quito: "Copias" de los demas comprobantes (valian 1)</span>
                                 </p>
                             </div>
                         </div>
