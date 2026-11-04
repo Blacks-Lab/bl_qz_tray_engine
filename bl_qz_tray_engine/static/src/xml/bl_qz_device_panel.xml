@@ -17,23 +17,8 @@
                     <div class="bl-opt">
                         <span class="bl-num bl-num-sm">1</span>
                         <div class="bl-opt-body">
-                            <p class="bl-opt-label">Nombre de este equipo<span class="bl-review-tag">queda igual</span></p>
-                            <p class="bl-opt-help">Es el nombre con el que aparece esta computadora en la lista de equipos.</p>
-                            <input
-                                type="text"
-                                class="form-control"
-                                t-att-value="state.device_name"
-                                t-on-change="onDeviceNameChange"
-                                t-att-readonly="readonly or state.saving"
-                            />
-                        </div>
-                    </div>
-
-                    <div class="bl-opt">
-                        <span class="bl-num bl-num-sm">2</span>
-                        <div class="bl-opt-body">
-                            <p class="bl-opt-label">Usar impresion ESC/POS via QZ Tray<span class="bl-review-tag">queda igual</span></p>
-                            <p class="bl-opt-help">Si lo apagas, esta computadora imprime con el navegador.</p>
+                            <p class="bl-opt-label">Usar impresion por QZ Tray en este equipo<span class="bl-review-tag">pasa al primer lugar</span></p>
+                            <p class="bl-opt-help">Si lo apagas, esta computadora imprime con el navegador y no se muestran las demas opciones.</p>
                             <div class="form-check">
                                 <input
                                     class="form-check-input"
@@ -47,6 +32,22 @@
                                     Activado en este equipo
                                 </label>
                             </div>
+                        </div>
+                    </div>
+
+                    <t t-if="state.qz_enabled">
+                    <div class="bl-opt">
+                        <span class="bl-num bl-num-sm">2</span>
+                        <div class="bl-opt-body">
+                            <p class="bl-opt-label">Nombre de este equipo<span class="bl-review-tag">queda igual</span></p>
+                            <p class="bl-opt-help">Es el nombre con el que aparece esta computadora en la lista de equipos.</p>
+                            <input
+                                type="text"
+                                class="form-control"
+                                t-att-value="state.device_name"
+                                t-on-change="onDeviceNameChange"
+                                t-att-readonly="readonly or state.saving"
+                            />
                         </div>
                     </div>
 
@@ -254,6 +255,7 @@
                             </div>
                         </div>
                     </div>
+                    </t>
                 </t>
             </div>
         </div>
