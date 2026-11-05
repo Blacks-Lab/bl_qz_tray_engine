@@ -30,6 +30,10 @@ function parseCopies(value) {
     return Math.max(1, Math.min(10, parsed));
 }
 
+// Si el navegador no deja guardar datos el identificador se recuerda en memoria: sin esto cada
+// llamada generaba uno nuevo y el servidor creaba un equipo por cada carga (H9).
+let memoryUuid = "";
+
 function ensureUuid() {
     let current = "";
     try {
@@ -39,6 +43,9 @@ function ensureUuid() {
     }
     if (current) {
         return current;
+    }
+    if (memoryUuid) {
+        return memoryUuid;
     }
 
     let generated = "";
@@ -51,6 +58,7 @@ function ensureUuid() {
         generated = `qz-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     }
 
+    memoryUuid = generated;
     try {
         window.localStorage.setItem(DEVICE_UUID_KEY, generated);
     } catch {
@@ -314,7 +322,11 @@ export class BlQzDevicePanel extends Component {
                 device.device_uuid,
                 normalizeString(this.state.device_name) || `Equipo ${device.device_uuid.slice(0, 8)}`,
             ]);
-            this._setDeviceState(refreshed);
+            // Si el usuario cambio otro control mientras se guardaba, la respuesta del servidor
+            // todavia no trae ese cambio: no se pisa la pantalla; se aplica tras el ultimo guardado.
+            if (!this._blQzSavePending) {
+                this._setDeviceState(refreshed);
+            }
             this.notification.add(_t("Configuracion del equipo guardada."), { type: "success" });
         } catch (error) {
             this.state.error = error?.message || _t("No se pudo guardar la configuracion del equipo.");
