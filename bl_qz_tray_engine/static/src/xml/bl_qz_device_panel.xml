@@ -266,7 +266,7 @@
                         <span class="bl-num bl-num-sm"><t t-esc="nums.tests"/></span>
                         <div class="bl-opt-body">
                             <p class="bl-opt-label">Pruebas y firma de QZ Tray<span class="bl-review-tag">queda igual</span></p>
-                            <p class="bl-opt-help">Imprimi una cabecera de prueba y administra el certificado de firma.</p>
+                            <p class="bl-opt-help">Imprimí una cabecera de prueba y administrá el certificado de firma.</p>
                             <div class="d-flex gap-2 flex-wrap">
                                 <button
                                     type="button"

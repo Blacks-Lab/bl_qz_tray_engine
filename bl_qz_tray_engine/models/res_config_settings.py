@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import logging
+
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 from ..bl_qz_signing_utils import ensure_company_signing_material, has_company_signing_material
+
+_logger = logging.getLogger(__name__)
 
 
 class ResConfigSettings(models.TransientModel):
@@ -99,6 +103,12 @@ class ResConfigSettings(models.TransientModel):
             )
         except RuntimeError as error:
             self._raise_qz_signing_dependency_error(error)
+        except Exception as error:  # noqa: BLE001
+            _logger.exception("bl_qz_tray_engine: fallo la generacion del material de firma")
+            raise UserError(_(
+                "No se pudo generar el certificado de firma de QZ. "
+                "Avise al administrador: el detalle quedo en el registro del servidor."
+            )) from error
 
         return {
             "type": "ir.actions.client",

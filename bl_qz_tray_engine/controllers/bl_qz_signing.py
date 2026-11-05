@@ -82,7 +82,7 @@ class BlQzSigningController(http.Controller):
 
     @staticmethod
     def _hash_algorithm():
-        hashes, _, _ = BlQzSigningController._get_cryptography_primitives()
+        hashes, _padding, _loader = BlQzSigningController._get_cryptography_primitives()
         if QZ_SIGNATURE_ALGORITHM == "SHA512":
             return hashes.SHA512()
         if QZ_SIGNATURE_ALGORITHM == "SHA1":
@@ -211,7 +211,9 @@ class BlQzSigningController(http.Controller):
             device_id=device_id,
             company_id=company_id,
         )
-        _, padding, load_pem_private_key = self._get_cryptography_primitives()
+        # No se llama "_": ese nombre tapaba la funcion de traduccion de todo el metodo y un
+        # pedido sin contenido terminaba en UnboundLocalError en vez del aviso (N31).
+        _hashes, padding, load_pem_private_key = self._get_cryptography_primitives()
 
         try:
             private_key = load_pem_private_key(private_key_pem.encode("utf-8"), password=None)

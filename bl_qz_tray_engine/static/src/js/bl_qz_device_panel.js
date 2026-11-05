@@ -271,7 +271,26 @@ export class BlQzDevicePanel extends Component {
         return commands;
     }
 
+    // Guardado en cola (H17): si el usuario cambia otro control mientras se guarda, no se
+    // lanza un segundo write en paralelo (se pisaban entre si y el orden de llegada al
+    // servidor no estaba garantizado); se guarda UNA vez mas al terminar, con el estado final.
     async _saveDevice() {
+        if (this._blQzSaving) {
+            this._blQzSavePending = true;
+            return;
+        }
+        this._blQzSaving = true;
+        try {
+            do {
+                this._blQzSavePending = false;
+                await this._saveDeviceNow();
+            } while (this._blQzSavePending);
+        } finally {
+            this._blQzSaving = false;
+        }
+    }
+
+    async _saveDeviceNow() {
         const device = this.state.device;
         if (!device?.id) {
             return;
@@ -300,6 +319,18 @@ export class BlQzDevicePanel extends Component {
         } catch (error) {
             this.state.error = error?.message || _t("No se pudo guardar la configuracion del equipo.");
             this.notification.add(this.state.error, { type: "danger" });
+            // La pantalla ya mostraba el valor nuevo aunque no se guardo: se vuelve a leer lo
+            // que realmente tiene el servidor para no mostrar un dato falso (H17).
+            this._blQzSavePending = false;
+            try {
+                const current = await this.orm.call("bl.qz.device", "bl_qz_resolve_device", [
+                    device.device_uuid,
+                    normalizeString(this.state.device_name) || `Equipo ${device.device_uuid.slice(0, 8)}`,
+                ]);
+                this._setDeviceState(current);
+            } catch {
+                // sin conexion: queda el aviso de error
+            }
         } finally {
             this.state.saving = false;
         }

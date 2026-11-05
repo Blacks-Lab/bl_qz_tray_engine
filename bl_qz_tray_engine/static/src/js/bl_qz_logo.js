@@ -18,6 +18,11 @@ export const BINARIZATION_THRESHOLD = 170;
 // Cachear el resultado no cambia un solo byte del output, solo evita recalcularlo
 // en cada ticket. Cache LRU acotada, se limpia sola al recargar la sesion POS.
 const RASTER_CACHE_MAX_ENTRIES = 12;
+// Si la imagen no carga ni falla (red colgada), el ticket quedaba sin salir ni dar error (N14).
+const LOGO_LOAD_TIMEOUT_MS = 10000;
+// El logo de la compania se vuelve a pedir pasado este tiempo: la clave de cache no lleva la
+// fecha de modificacion y un logo cambiado con el POS abierto seguia saliendo el viejo (H13).
+const COMPANY_LOGO_CACHE_TTL_MS = 5 * 60 * 1000;
 const normalizedLogoCache = new Map();
 const companyLogoCache = new Map();
 const arcaRasterCache = new Map();
@@ -30,6 +35,16 @@ function cacheGet(cache, key) {
     cache.delete(key);
     cache.set(key, value);
     return value;
+}
+
+function withLogoTimeout(promise, fallback) {
+    return new Promise((resolve) => {
+        const timer = setTimeout(() => resolve(fallback), LOGO_LOAD_TIMEOUT_MS);
+        promise.then((value) => {
+            clearTimeout(timer);
+            resolve(value);
+        });
+    });
 }
 
 function cacheSet(cache, key, value) {
@@ -199,12 +214,12 @@ async function loadLogoFromCompany(companyId, logoSize) {
     }
 
     const cacheKey = `company|${companyId}|${logoSize.width}|${logoSize.height}|${logoSize.keepAspectRatio}|${logoSize.alignment}`;
-    const cachedValue = cacheGet(companyLogoCache, cacheKey);
-    if (cachedValue) {
-        return cachedValue;
+    const cachedEntry = cacheGet(companyLogoCache, cacheKey);
+    if (cachedEntry && Date.now() - cachedEntry.at < COMPANY_LOGO_CACHE_TTL_MS) {
+        return cachedEntry.value;
     }
 
-    const rendered = await new Promise((resolve) => {
+    const rendered = await withLogoTimeout(new Promise((resolve) => {
         const img = new Image();
         img.onload = () => {
             try {
@@ -230,10 +245,10 @@ async function loadLogoFromCompany(companyId, logoSize) {
         img.onerror = () => resolve("");
         img.crossOrigin = "anonymous";
         img.src = `/web/image?model=res.company&id=${companyId}&field=logo`;
-    });
+    }), "");
 
     if (rendered) {
-        cacheSet(companyLogoCache, cacheKey, rendered);
+        cacheSet(companyLogoCache, cacheKey, { value: rendered, at: Date.now() });
     }
     return rendered;
 }
@@ -269,7 +284,7 @@ export async function normalizeLogoForEscPos(base64ImageData, options = {}) {
         return cachedValue;
     }
 
-    const rendered = await new Promise((resolve) => {
+    const rendered = await withLogoTimeout(new Promise((resolve) => {
         const img = new Image();
         img.onload = () => {
             try {
@@ -320,7 +335,7 @@ export async function normalizeLogoForEscPos(base64ImageData, options = {}) {
         img.onerror = () => resolve(dataUrlToBase64(imageDataUrl));
         img.crossOrigin = "anonymous";
         img.src = imageDataUrl;
-    });
+    }), dataUrlToBase64(imageDataUrl));
 
     if (rendered) {
         cacheSet(normalizedLogoCache, cacheKey, rendered);

@@ -42,9 +42,18 @@ export function getQzWorkstationOverrides() {
         return {};
     }
 
-    const printerNameRaw = storage.getItem(STORAGE_KEYS.printerName);
-    const forceRawRaw = storage.getItem(STORAGE_KEYS.forceRaw);
-    const copiesRaw = storage.getItem(STORAGE_KEYS.copies);
+    // Leer el almacenamiento puede lanzar (permisos del navegador): no debe romper la
+    // impresion, simplemente no hay ajustes locales.
+    let printerNameRaw = null;
+    let forceRawRaw = null;
+    let copiesRaw = null;
+    try {
+        printerNameRaw = storage.getItem(STORAGE_KEYS.printerName);
+        forceRawRaw = storage.getItem(STORAGE_KEYS.forceRaw);
+        copiesRaw = storage.getItem(STORAGE_KEYS.copies);
+    } catch {
+        return {};
+    }
 
     const printerName = typeof printerNameRaw === "string" ? printerNameRaw.trim() : "";
     const forceRaw = parseBool(forceRawRaw);

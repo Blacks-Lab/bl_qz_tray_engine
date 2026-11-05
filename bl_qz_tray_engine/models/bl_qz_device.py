@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import uuid
+
+from psycopg2 import IntegrityError, errors as pgerrors
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+
+_logger = logging.getLogger(__name__)
 
 from ..bl_qz_signing_utils import ensure_company_signing_material
 
@@ -88,8 +93,12 @@ class BlQzDevice(models.Model):
 
         Actualiza last_seen. Es el unico punto de entrada desde el POS.
         """
-        resolved_uuid = (device_uuid or "").strip()
+        resolved_uuid = device_uuid.strip() if isinstance(device_uuid, str) else ""
         if not resolved_uuid:
+            return False
+        if len(resolved_uuid) > 100:
+            # Un identificador real mide 36 caracteres. Uno enorme rompe el indice de
+            # Postgres con un error de servidor (N32): se rechaza en vez de intentar crearlo.
             return False
 
         # El equipo es una computadora fisica y se busca SOLO por su UUID.
@@ -105,13 +114,26 @@ class BlQzDevice(models.Model):
             .search([("device_uuid", "=", resolved_uuid)], limit=1)
         )
         if not device:
-            fallback_name = (default_name or "").strip() or f"Equipo {resolved_uuid[:8]}"
-            device = self.sudo().create(
-                {
-                    "device_uuid": resolved_uuid,
-                    "name": fallback_name,
-                }
-            )
+            fallback_name = (
+                str(default_name).strip() if default_name not in (None, False) else ""
+            ) or f"Equipo {resolved_uuid[:8]}"
+            try:
+                with self.env.cr.savepoint():
+                    device = self.sudo().create(
+                        {
+                            "device_uuid": resolved_uuid,
+                            "name": fallback_name,
+                        }
+                    )
+            except IntegrityError as error:
+                # Otra solicitud simultanea creo el mismo equipo y ya confirmo (H23). Con el
+                # aislamiento de Odoo (REPEATABLE READ) esta transaccion no puede verlo todavia:
+                # se pide a Odoo que repita la solicitud completa, y en la repeticion la busqueda
+                # lo encuentra. Lanzar un error de serializacion es lo que Odoo reintenta solo;
+                # una violacion de unicidad la devuelve al usuario como error.
+                raise pgerrors.SerializationFailure(
+                    "Equipo QZ creado en simultaneo; se repite la solicitud."
+                ) from error
 
         existing_module_keys = {row.module_key for row in device.printer_ids}
         create_commands = []
@@ -131,10 +153,12 @@ class BlQzDevice(models.Model):
                     },
                 )
             )
+        # Un solo write: antes eran dos (filas y last_seen) y una falla entre medio dejaba el
+        # equipo a medias (N12).
+        values = {"last_seen": fields.Datetime.now()}
         if create_commands:
-            device.write({"printer_ids": create_commands})
-
-        device.write({"last_seen": fields.Datetime.now()})
+            values["printer_ids"] = create_commands
+        device.write(values)
         printer_rows = device.printer_ids.sorted(lambda row: (row.sequence, row.id))
         return {
             "id": device.id,
@@ -262,7 +286,8 @@ class BlQzDevice(models.Model):
                     "logo_height": int(pos_config.logo_height or 80),
                     "logo_keep_aspect_ratio": bool(pos_config.logo_keep_aspect_ratio),
                     "logo_alignment": pos_config.logo_alignment or "center",
-                    "qz_logo_scale_percent": int(pos_config.qz_logo_scale_percent or 130),
+                    # 100 = el mismo valor por defecto que usa el ticket real (H12).
+                    "qz_logo_scale_percent": int(pos_config.qz_logo_scale_percent or 100),
                     "qz_logo_dot_density": pos_config.qz_logo_dot_density or "double",
                     "qz_ticket_copies": copies,
                 },
@@ -293,6 +318,14 @@ class BlQzDevice(models.Model):
             raise UserError(_(
                 "No se pudo completar la accion de firma QZ. "
                 "Verifique que la libreria Python 'cryptography' este instalada en el servidor."
+            )) from error
+        except Exception as error:  # noqa: BLE001
+            # Cualquier otra falla (disco, base, datos) llegaba como error de servidor con un
+            # texto que culpaba a 'cryptography' (H27): ahora se registra y se avisa claro.
+            _logger.exception("bl_qz_tray_engine: fallo la generacion del material de firma")
+            raise UserError(_(
+                "No se pudo generar el certificado de firma de QZ. "
+                "Avise al administrador: el detalle quedo en el registro del servidor."
             )) from error
 
         return {

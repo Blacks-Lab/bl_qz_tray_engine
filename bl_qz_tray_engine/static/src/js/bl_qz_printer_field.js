@@ -46,12 +46,25 @@ export class BlQzPrinterSelectionDialog extends Component {
         onSelect: Function,
     };
 
+    setup() {
+        this.notification = useService("notification");
+    }
+
     async onSelectPrinter(ev) {
         const printerName = normalizePrinterName(ev.currentTarget?.dataset?.printerName);
         if (!printerName) {
             return;
         }
-        await this.props.onSelect(printerName);
+        try {
+            await this.props.onSelect(printerName);
+        } catch (error) {
+            // Antes el error quedaba sin atrapar y el dialogo abierto sin explicacion (H25).
+            this.notification.add(
+                error?.message || _t("No se pudo guardar la impresora elegida."),
+                { type: "danger" }
+            );
+            return;
+        }
         this.props.close();
     }
 }
@@ -66,6 +79,12 @@ export class BlQzPrinterField extends CharField {
     }
 
     async onDetectPrinters() {
+        // Un segundo clic mientras detecta (o con el dialogo abierto) abria otro dialogo (H25).
+        if (this._blQzDetecting) {
+            return;
+        }
+        this._blQzDetecting = true;
+        let dialogOpened = false;
         try {
             // La puerta unica de bl_qz_security.js conecta con tope de tiempo y
             // reconecta sola si QZ Tray devuelve una conexion envenenada.
@@ -90,21 +109,34 @@ export class BlQzPrinterField extends CharField {
                 return;
             }
 
-            this.dialog.add(BlQzPrinterSelectionDialog, {
-                title: _t("Seleccionar impresora QZ"),
-                printers,
-                currentPrinter,
-                defaultPrinter,
-                onSelect: async (selectedPrinter) => {
-                    await this.props.record.update({ [this.props.name]: selectedPrinter });
-                    this.notification.add(
-                        `${_t("Impresora seleccionada")}: ${selectedPrinter}`,
-                        { type: "success" }
-                    );
+            dialogOpened = true;
+            this.dialog.add(
+                BlQzPrinterSelectionDialog,
+                {
+                    title: _t("Seleccionar impresora QZ"),
+                    printers,
+                    currentPrinter,
+                    defaultPrinter,
+                    onSelect: async (selectedPrinter) => {
+                        await this.props.record.update({ [this.props.name]: selectedPrinter });
+                        this.notification.add(
+                            `${_t("Impresora seleccionada")}: ${selectedPrinter}`,
+                            { type: "success" }
+                        );
+                    },
                 },
-            });
+                {
+                    onClose: () => {
+                        this._blQzDetecting = false;
+                    },
+                }
+            );
         } catch (error) {
             this.notification.add(errorMessage(error), { type: "danger" });
+        } finally {
+            if (!dialogOpened) {
+                this._blQzDetecting = false;
+            }
         }
     }
 }

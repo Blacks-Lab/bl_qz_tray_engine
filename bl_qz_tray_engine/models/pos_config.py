@@ -129,6 +129,8 @@ class PosConfig(models.Model):
         if not fields_to_read:
             return {}
 
-        values = self.sudo().read(fields_to_read)[0]
+        # Sin sudo: la lectura respeta los permisos y las reglas de compania del usuario.
+        # Con sudo, un cajero de otra compania leia la configuracion de cualquier TPV (H22).
+        values = self.read(fields_to_read)[0]
         values.pop("id", None)
         return values

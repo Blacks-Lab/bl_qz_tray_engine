@@ -17,7 +17,11 @@ def migrate(cr, version):
     cr.execute(
         "UPDATE bl_qz_device_printer SET company_id = NULL WHERE company_id IS NOT NULL"
     )
-    cr.execute(
-        "DELETE FROM ir_attachment "
-        "WHERE res_model = 'ir.ui.view' AND name LIKE '%assets%'"
-    )
+    # Por el ORM (borra tambien el archivo del filestore) y sin distinguir mayusculas, igual
+    # que las migraciones 1.5.0 y 1.6.4 (H18).
+    from odoo import SUPERUSER_ID, api
+
+    env = api.Environment(cr, SUPERUSER_ID, {})
+    env["ir.attachment"].search(
+        [("res_model", "=", "ir.ui.view"), ("name", "ilike", "assets")]
+    ).unlink()

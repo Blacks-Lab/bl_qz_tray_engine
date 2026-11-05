@@ -30,12 +30,19 @@ const ESC_POS_ALIGN_RIGHT = `${ESC}a\x02`;
 let connectPromise = null;
 let cachedPrinterKey = "";
 let cachedPrinterName = "";
-const QZ_READY_CACHE_TTL_MS = 8000;
-let qzReadyCacheTs = 0;
+// La impresora resuelta se recuerda un rato: sin vencimiento, una impresora retirada del
+// sistema (o la decision de caer en la predeterminada) quedaba pegada hasta recargar (H5).
+const QZ_PRINTER_CACHE_TTL_MS = 5 * 60 * 1000;
+let cachedPrinterTs = 0;
 
 const QZ_TRAY_UNAVAILABLE_MESSAGE =
     "QZ Tray parece estar cerrado o no disponible en este equipo. Abri la aplicacion QZ Tray y reintenta la impresion.";
 const BL_QZ_DEVICE_UUID_KEY = "bl_qz_device_uuid";
+
+// Si el navegador no deja guardar datos (modo restringido, almacenamiento bloqueado), el
+// identificador se recuerda en memoria durante la vida de la pestania: sin esto cada
+// llamada devolvia uno nuevo y el servidor creaba un equipo nuevo por cada carga (H9).
+let memoryDeviceUuid = "";
 
 export function blQzGetDeviceUuid() {
     let storedUuid = "";
@@ -48,6 +55,9 @@ export function blQzGetDeviceUuid() {
     if (storedUuid) {
         return storedUuid;
     }
+    if (memoryDeviceUuid) {
+        return memoryDeviceUuid;
+    }
 
     let generatedUuid = "";
     if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -57,6 +67,7 @@ export function blQzGetDeviceUuid() {
         generatedUuid = `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
     }
 
+    memoryDeviceUuid = generatedUuid;
     try {
         window.localStorage.setItem(BL_QZ_DEVICE_UUID_KEY, generatedUuid);
     } catch {
@@ -239,14 +250,18 @@ export async function listQzTrayPrinters() {
 export function clearQzPrinterCache() {
     cachedPrinterKey = "";
     cachedPrinterName = "";
-    qzReadyCacheTs = 0;
+    cachedPrinterTs = 0;
 }
 
 async function resolvePrinterName(qz, posConfig) {
     const configuredName = normalizePrinterName(posConfig?.qz_tray_printer_name);
     const cacheKey = configuredName || "__qz_default_printer__";
 
-    if (cachedPrinterKey === cacheKey && cachedPrinterName) {
+    if (
+        cachedPrinterKey === cacheKey &&
+        cachedPrinterName &&
+        Date.now() - cachedPrinterTs < QZ_PRINTER_CACHE_TTL_MS
+    ) {
         return cachedPrinterName;
     }
 
@@ -254,6 +269,7 @@ async function resolvePrinterName(qz, posConfig) {
     if (resolvedPrinterName) {
         cachedPrinterKey = cacheKey;
         cachedPrinterName = resolvedPrinterName;
+        cachedPrinterTs = Date.now();
     }
     return resolvedPrinterName;
 }
@@ -283,6 +299,12 @@ async function resolvePrinterNameUncached(qz, posConfig) {
         try {
             const defaultPrinter = await getQzDefaultPrinter();
             if (defaultPrinter) {
+                // Antes caia en silencio: ahora queda el aviso en la consola del navegador
+                // para que se pueda ver por que sale por otra impresora (H5).
+                console.warn(
+                    `[bl_qz_tray_engine] La impresora configurada "${configuredName}" no existe en este equipo; ` +
+                        `se imprime en la predeterminada de QZ Tray: "${defaultPrinter}".`
+                );
                 return defaultPrinter;
             }
         } catch {
@@ -439,6 +461,11 @@ function normalizeRawPayload(rawPayload, applyGlobalCenterAlignment = true) {
 
     for (const entry of entries) {
         if (typeof entry === "string") {
+            // Un texto vacio no es contenido: antes pasaba el control de "vacio" y se
+            // mandaba un trabajo en blanco a la impresora.
+            if (!entry.trim()) {
+                continue;
+            }
             const value = applyGlobalCenterAlignment
                 ? applyEscPosGlobalCenterAlignment(entry)
                 : entry;
@@ -500,8 +527,9 @@ export async function sendRawToQzPrinter(rawPayload, posConfig = {}, options = {
         }
 
         await reconnectSocket(qz);
-        const retryPrinterName = (await resolvePrinterName(qz, effectiveConfig)) || printerName;
-        config = qz.configs.create(retryPrinterName, configOptions);
+        // El reintento usa la MISMA impresora del primer intento: volver a resolver podia
+        // caer en la predeterminada y sacar el mismo ticket por otra impresora (N6).
+        config = qz.configs.create(printerName, configOptions);
         await runQzOperation((activeQz) => activeQz.print(config, payload), printOptions);
     }
 

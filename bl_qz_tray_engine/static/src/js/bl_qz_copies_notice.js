@@ -1,6 +1,6 @@
 /** @odoo-module **/
 
-import { Component, onMounted, onPatched, onWillStart, useRef, useState } from "@odoo/owl";
+import { Component, onMounted, onPatched, onWillStart, onWillUnmount, useRef, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { standardWidgetProps } from "@web/views/widgets/standard_widget_props";
@@ -32,6 +32,23 @@ export class BlQzCopiesNotice extends Component {
         });
         onMounted(() => this._applyLock());
         onPatched(() => this._applyLock());
+
+        // El bloqueo se calculaba una sola vez al abrir el formulario: si el interruptor
+        // cambiaba en otra pestania el campo quedaba mal hasta recargar (H26). Ahora se
+        // vuelve a leer cuando la pestania recupera el foco.
+        this._reloadOnReturn = () => {
+            if (!document.hidden) {
+                this._load();
+            }
+        };
+        onMounted(() => {
+            document.addEventListener("visibilitychange", this._reloadOnReturn);
+            window.addEventListener("focus", this._reloadOnReturn);
+        });
+        onWillUnmount(() => {
+            document.removeEventListener("visibilitychange", this._reloadOnReturn);
+            window.removeEventListener("focus", this._reloadOnReturn);
+        });
     }
 
     async _load() {
