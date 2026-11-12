@@ -90,21 +90,40 @@
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
-    transition: filter 0.12s ease;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease, background 0.12s ease;
 
     &:hover,
     &:focus-visible {
-        filter: brightness(1.1);
+        transform: translateY(-1px);
     }
 
+    &:active {
+        transform: translateY(0);
+    }
+
+    // Principal: degradado del acento con sombra suave.
     &.bl-btn-primary {
-        background: var(--bl-accent);
+        border-color: transparent;
+        background: var(--bl-gradient);
+        box-shadow: var(--bl-shadow-btn);
         color: #fff;
+
+        &:hover,
+        &:focus-visible {
+            box-shadow: 0 8px 16px color-mix(in srgb, var(--bl-accent) 38%, transparent);
+            filter: brightness(1.05);
+        }
     }
 
+    // Secundario: borde del acento y degradado suave al pasar el mouse.
     &.bl-btn-ghost {
         background: transparent;
         color: var(--bl-accent);
+
+        &:hover,
+        &:focus-visible {
+            background: var(--bl-gradient-soft);
+        }
     }
 }
 
@@ -141,4 +160,10 @@
     background: transparent;
     color: var(--bl-accent);
     font-weight: 600;
+
+    &:hover,
+    &:focus-visible {
+        background: var(--bl-gradient-soft);
+        color: var(--bl-accent);
+    }
 }

@@ -4,6 +4,11 @@
     --bl-accent: #4a5f8f;
     --bl-accent-soft: #{"color-mix(in srgb, var(--bl-accent) 10%, transparent)"};
     --bl-accent-line: #{"color-mix(in srgb, var(--bl-accent) 35%, transparent)"};
+    // Botones con degradado: del acento a una version mas clara. Cambiar solo aca.
+    --bl-accent-light: #{"color-mix(in srgb, var(--bl-accent) 72%, white)"};
+    --bl-gradient: linear-gradient(135deg, var(--bl-accent) 0%, var(--bl-accent-light) 100%);
+    --bl-gradient-soft: #{"linear-gradient(135deg, color-mix(in srgb, var(--bl-accent) 14%, transparent) 0%, color-mix(in srgb, var(--bl-accent-light) 22%, transparent) 100%)"};
+    --bl-shadow-btn: #{"0 4px 10px color-mix(in srgb, var(--bl-accent) 32%, transparent)"};
     --bl-border: var(--bs-border-color, #dee2e6);
     --bl-text-muted: var(--bs-secondary-color, #6c757d);
     --bl-card-bg: var(--bs-body-bg, #fff);
@@ -143,16 +148,16 @@
 
 // El boton "Detectar" del panel usaba un azul propio: dentro de la tarjeta toma el acento.
 .bl-card .bl_qz_detect_btn {
-    background: var(--bl-accent);
-    box-shadow: none;
+    background: var(--bl-gradient);
+    box-shadow: var(--bl-shadow-btn);
     border-radius: 8px;
 }
 
 .bl-card .bl_qz_detect_btn:hover:not(:disabled),
 .bl-card .bl_qz_detect_btn:focus-visible:not(:disabled) {
-    box-shadow: none;
-    transform: none;
-    filter: brightness(1.12);
+    box-shadow: 0 8px 16px color-mix(in srgb, var(--bl-accent) 38%, transparent);
+    transform: translateY(-1px);
+    filter: brightness(1.05);
 }
 
 // Interruptor (toggle) de las opciones: azul del acento cuando esta encendido, gris apagado.
