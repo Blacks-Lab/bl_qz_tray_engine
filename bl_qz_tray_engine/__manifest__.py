@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "BlackLabs QZ Tray Engine",
-    "version": "18.0.1.7.10",
+    "version": "18.0.1.7.11",
     "author": "Ernesto Bernís - BlackLabs",
     "license": "LGPL-3",
     "category": "Point Of Sale",
@@ -28,8 +28,15 @@
             "/bl_qz_tray_engine/static/src/js/bl_qz_copies_notice.js",
             "/bl_qz_tray_engine/static/src/xml/bl_qz_copies_notice.xml",
             "/bl_qz_tray_engine/static/src/js/bl_qz_logo.js",
+            "/bl_qz_tray_engine/static/src/js/bl_qz_print_alert.js",
+            "/bl_qz_tray_engine/static/src/scss/bl_qz_print_alert.scss",
+            "/bl_qz_tray_engine/static/src/xml/bl_qz_print_alert.xml",
         ],
         "point_of_sale._assets_pos": [
+            "/bl_qz_tray_engine/static/src/scss/bl_modules_section.scss",
+            "/bl_qz_tray_engine/static/src/scss/bl_qz_print_alert.scss",
+            "/bl_qz_tray_engine/static/src/xml/bl_qz_print_alert.xml",
+            "/bl_qz_tray_engine/static/src/js/bl_qz_print_alert.js",
             "/bl_qz_tray_engine/static/src/js/bl_qz_security.js",
             "/bl_qz_tray_engine/static/src/js/bl_qz_settings.js",
             "/bl_qz_tray_engine/static/src/js/bl_qz_pos_store.js",

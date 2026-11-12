@@ -1,0 +1,144 @@
+// Avisos y dialogos de QZ Tray Engine: mismo estilo que la seccion "Modulos BlackLabs".
+// Los colores NO se definen aca: salen de las variables --bl-* de bl_modules_section.scss.
+.bl-dialog {
+    border: 1px solid var(--bl-accent-line);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.bl-alert {
+    padding: 0.4rem 0.2rem 0.2rem;
+}
+
+.bl-alert-head {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 0.9rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid var(--bl-border);
+}
+
+.bl-alert-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.bl-alert-sub {
+    margin: 0.1rem 0 0;
+    font-size: 0.8125rem;
+    color: var(--bl-text-muted);
+}
+
+.bl-alert-detail {
+    display: grid;
+    gap: 0.25rem;
+    margin-bottom: 0.9rem;
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--bl-accent-line);
+    border-radius: 8px;
+    background: var(--bl-accent-soft);
+
+    .bl-alert-key {
+        display: inline-block;
+        min-width: 6.5rem;
+        color: var(--bl-text-muted);
+        font-size: 0.8125rem;
+    }
+}
+
+.bl-alert-warn {
+    margin: 0 0 0.75rem;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--bl-accent-line);
+    border-radius: 8px;
+    background: var(--bl-accent-soft);
+    color: var(--bl-accent);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.bl-alert-question {
+    margin: 0 0 0.3rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.bl-alert-tips {
+    margin: 0 0 1.1rem;
+    padding-left: 1.2rem;
+    color: var(--bl-text-muted);
+    font-size: 0.875rem;
+
+    li {
+        margin-bottom: 0.2rem;
+    }
+}
+
+.bl-alert-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+}
+
+.bl-btn {
+    min-width: 9.5rem;
+    padding: 0.55rem 1.1rem;
+    border: 1px solid var(--bl-accent);
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.12s ease;
+
+    &:hover,
+    &:focus-visible {
+        filter: brightness(1.1);
+    }
+
+    &.bl-btn-primary {
+        background: var(--bl-accent);
+        color: #fff;
+    }
+
+    &.bl-btn-ghost {
+        background: transparent;
+        color: var(--bl-accent);
+    }
+}
+
+// Selectores de impresora (dialogos de "Detectar impresoras"): mismo lenguaje visual.
+.bl-dialog .list-group-item {
+    border-color: var(--bl-border);
+
+    &:hover {
+        background: var(--bl-accent-soft);
+    }
+}
+
+.bl-dialog .bl-badge {
+    padding: 0.2rem 0.6rem;
+    border: 1px solid var(--bl-accent-line);
+    border-radius: 999px;
+    background: var(--bl-accent-soft);
+    color: var(--bl-accent);
+    font-size: 0.6875rem;
+    font-weight: 600;
+}
+
+.bl-dialog .modal-header {
+    border-bottom: 1px solid var(--bl-border);
+
+    .modal-title {
+        font-weight: 700;
+    }
+}
+
+.bl-dialog .modal-footer .btn-secondary {
+    border: 1px solid var(--bl-accent);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--bl-accent);
+    font-weight: 600;
+}

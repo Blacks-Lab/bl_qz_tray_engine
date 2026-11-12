@@ -153,6 +153,32 @@ function isTransientQzConnectionError(error) {
     ].some((token) => detail.includes(token));
 }
 
+// Errores que ocurren ANTES de que QZ Tray reciba el trabajo: reintentar es seguro.
+// Los demas (corte "connection closed before response received", websocket, network) pueden
+// llegar DESPUES de que la impresora ya recibio el ticket: reintentar solo lo duplica (H4).
+function isSafeToRetryPrint(error) {
+    const detail = normalizeQzErrorMessage(error).toLowerCase();
+    if (!detail) {
+        return false;
+    }
+    return [
+        "already exists",
+        "current connection attempt has not returned yet",
+        "waiting for previous disconnect request to complete",
+        "a connection to qz has not been established yet",
+    ].some((token) => detail.includes(token));
+}
+
+// Quien muestra el aviso "posible falla de comunicacion con la impresora" (el POS lo registra
+// con un dialogo). Recibe { jobName, printerName, attempt, error } y devuelve una promesa con
+// "retry" (reintentar), "printed" (ya se imprimio) o "cancel".
+const MAX_AMBIGUOUS_ATTEMPTS = 3;
+let ambiguousPrintHandler = null;
+
+export function blQzSetAmbiguousPrintHandler(handler) {
+    ambiguousPrintHandler = typeof handler === "function" ? handler : null;
+}
+
 function wait(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -518,22 +544,56 @@ export async function sendRawToQzPrinter(rawPayload, posConfig = {}, options = {
         fallbackMessage: "No se pudo confirmar la impresion con QZ Tray.",
     };
     let config = qz.configs.create(printerName, configOptions);
-    try {
-        await runQzOperation((activeQz) => activeQz.print(config, payload), printOptions);
-    } catch (error) {
-        clearQzPrinterCache();
-        if (!isTransientQzConnectionError(error)) {
-            throw error;
+    let safeRetryDone = false;
+    let attempt = 1;
+    for (;;) {
+        try {
+            await runQzOperation((activeQz) => activeQz.print(config, payload), printOptions);
+            return true;
+        } catch (error) {
+            clearQzPrinterCache();
+
+            // Error ANTES de que QZ Tray reciba el trabajo: reintentar una vez es seguro.
+            if (isSafeToRetryPrint(error) && !safeRetryDone) {
+                safeRetryDone = true;
+                await reconnectSocket(qz);
+                // Misma impresora del primer intento: volver a resolver podia caer en la
+                // predeterminada y sacar el mismo ticket por otra impresora (N6).
+                config = qz.configs.create(printerName, configOptions);
+                continue;
+            }
+            if (!isTransientQzConnectionError(error)) {
+                throw error;
+            }
+
+            // Corte AMBIGUO: el comprobante pudo haber salido y reenviarlo lo duplicaria (H4).
+            // Decide el cajero mirando la impresora; sin pantalla para preguntar, no se reenvia.
+            const decision = ambiguousPrintHandler
+                ? await ambiguousPrintHandler({
+                      jobName: configOptions.jobName,
+                      printerName,
+                      attempt,
+                      error,
+                  })
+                : "cancel";
+            if (decision === "printed") {
+                return true;
+            }
+            if (decision === "retry" && attempt < MAX_AMBIGUOUS_ATTEMPTS) {
+                attempt += 1;
+                await reconnectSocket(qz);
+                config = qz.configs.create(printerName, configOptions);
+                continue;
+            }
+            const ambiguous = new Error(
+                "Se cortó la conexión con QZ Tray mientras se imprimía y no se confirmó el comprobante. " +
+                    "Revisá si salió antes de volver a imprimir, para no duplicarlo."
+            );
+            ambiguous.blQzFriendly = true;
+            ambiguous.blQzDetail = normalizeQzErrorMessage(error);
+            throw ambiguous;
         }
-
-        await reconnectSocket(qz);
-        // El reintento usa la MISMA impresora del primer intento: volver a resolver podia
-        // caer en la predeterminada y sacar el mismo ticket por otra impresora (N6).
-        config = qz.configs.create(printerName, configOptions);
-        await runQzOperation((activeQz) => activeQz.print(config, payload), printOptions);
     }
-
-    return true;
 }
 
 export async function sendPixelHtmlToQzPrinter(htmlPayload, posConfig = {}, options = {}) {

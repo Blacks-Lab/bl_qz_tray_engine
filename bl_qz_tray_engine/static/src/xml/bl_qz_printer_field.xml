@@ -15,7 +15,7 @@
     </t>
 
     <t t-name="bl_qz_tray_engine.BlQzPrinterSelectionDialog">
-        <Dialog size="'md'" title="props.title || 'Seleccionar impresora QZ'">
+        <Dialog size="'md'" title="props.title || 'Seleccionar impresora QZ'" contentClass="'bl-dialog'">
             <div class="o_bl_qz_printer_dialog list-group">
                 <t t-foreach="props.printers" t-as="printerName" t-key="printerName">
                     <button
@@ -28,13 +28,13 @@
                         <span>
                             <span
                                 t-if="printerName === props.currentPrinter"
-                                class="badge text-bg-primary rounded-pill me-1"
+                                class="bl-badge me-1"
                             >
                                 Actual
                             </span>
                             <span
                                 t-if="printerName === props.defaultPrinter"
-                                class="badge text-bg-secondary rounded-pill"
+                                class="bl-badge"
                             >
                                 Predeterminada
                             </span>

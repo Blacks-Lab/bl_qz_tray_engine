@@ -2,7 +2,8 @@
 
 import { patch } from "@web/core/utils/patch";
 import { PosStore } from "@point_of_sale/app/store/pos_store";
-import { blQzGetDeviceUuid } from "./bl_qz_engine";
+import { blQzGetDeviceUuid, blQzSetAmbiguousPrintHandler } from "./bl_qz_engine";
+import { buildAmbiguousPrintHandler } from "./bl_qz_print_alert";
 
 // Espera antes de volver a leer la configuracion al volver a esta pestana: da tiempo a que
 // termine de guardarse lo que se cambio en la otra pestana (Ajustes).
@@ -12,6 +13,10 @@ const BL_QZ_REFRESH_MIN_INTERVAL_MS = 2000;
 patch(PosStore.prototype, {
     async processServerData() {
         await super.processServerData(...arguments);
+        // Aviso con el estilo de la seccion cuando se corta la comunicacion con la impresora.
+        if (this.dialog?.add) {
+            blQzSetAmbiguousPrintHandler(buildAmbiguousPrintHandler(this.dialog));
+        }
         await this.blQzLoadDevice();
         this.blQzWatchDeviceChanges();
     },

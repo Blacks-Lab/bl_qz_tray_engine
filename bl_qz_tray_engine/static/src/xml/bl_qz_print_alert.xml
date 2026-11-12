@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="bl_qz_tray_engine.BlQzPrintAlertDialog">
+        <Dialog size="'md'" header="false" footer="false" contentClass="'bl-dialog'">
+            <div class="bl-alert">
+                <div class="bl-alert-head">
+                    <span class="bl-num bl-num-warn" aria-hidden="true">!</span>
+                    <div>
+                        <p class="bl-alert-title">Posible falla de comunicación con la impresora</p>
+                        <p class="bl-alert-sub">La conexión con QZ Tray se cortó mientras se imprimía.</p>
+                    </div>
+                </div>
+
+                <div class="bl-alert-detail" t-if="props.jobName or props.printerName">
+                    <div t-if="props.jobName"><span class="bl-alert-key">Comprobante</span><strong t-esc="props.jobName"/></div>
+                    <div t-if="props.printerName"><span class="bl-alert-key">Impresora</span><strong t-esc="props.printerName"/></div>
+                </div>
+
+                <p class="bl-alert-warn" t-if="attemptText" t-esc="attemptText"/>
+
+                <p class="bl-alert-question">¿Salió el comprobante?</p>
+                <ul class="bl-alert-tips">
+                    <li>Mirá la impresora: si el papel ya salió, tocá <strong>Ya se imprimió</strong>.</li>
+                    <li>Si no salió nada, tocá <strong>Reintentar</strong>.</li>
+                    <li>Si pasa seguido, revisá el cable de la impresora y que QZ Tray esté abierto.</li>
+                </ul>
+
+                <div class="bl-alert-actions">
+                    <button type="button" class="bl-btn bl-btn-ghost" t-on-click="onPrinted">
+                        <i class="fa fa-check me-1" aria-hidden="true"/>Ya se imprimió
+                    </button>
+                    <button type="button" class="bl-btn bl-btn-primary" t-on-click="onRetry">
+                        <i class="fa fa-print me-1" aria-hidden="true"/>Reintentar
+                    </button>
+                </div>
+            </div>
+        </Dialog>
+    </t>
+</templates>

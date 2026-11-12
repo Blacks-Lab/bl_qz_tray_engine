@@ -4,12 +4,16 @@ import base64
 from urllib.parse import parse_qs, urlparse
 
 from odoo import _, http
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 from odoo.http import request
+
+# Tope de lo que se firma en una sola solicitud (un ticket con logo ronda los cientos de KB).
+MAX_SIGN_CHARS = 2_000_000
 
 from ..bl_qz_signing_utils import (
     QZ_SIGNATURE_ALGORITHM,
     ensure_company_signing_material,
+    has_company_signing_material,
     normalize_pem,
 )
 
@@ -24,8 +28,15 @@ class BlQzSigningController(http.Controller):
             return 0
         return parsed if parsed > 0 else 0
 
+    @staticmethod
+    def _user_companies():
+        # Solo las companias a las que el usuario pertenece: el navegador manda el id de
+        # compania/TPV y antes se le creia sin comprobar nada (H1).
+        return request.env.user.company_ids
+
     def _resolve_company(self, pos_config_id=None, device_id=None, company_id=None):
         env = request.env
+        allowed = self._user_companies()
 
         config_candidates = [
             pos_config_id,
@@ -46,13 +57,13 @@ class BlQzSigningController(http.Controller):
             if not candidate_id:
                 continue
             pos_config = env["pos.config"].sudo().browse(candidate_id)
-            if pos_config.exists():
+            if pos_config.exists() and pos_config.company_id in allowed:
                 return pos_config.company_id.sudo()
 
         company_candidate_id = self._to_int(company_id or request.params.get("company_id"))
         if company_candidate_id:
             company = env["res.company"].sudo().browse(company_candidate_id)
-            if company.exists():
+            if company.exists() and company in allowed:
                 return company
 
         device_candidate_id = self._to_int(device_id or request.params.get("device_id"))
@@ -61,7 +72,7 @@ class BlQzSigningController(http.Controller):
             # Un equipo puede no tener compania (es hardware, no pertenece a ninguna).
             # En ese caso hay que seguir bajando en la cadena hasta env.company en vez de
             # devolver un recordset vacio, que haria fallar la firma con "firma desactivada".
-            if device.exists() and device.company_id:
+            if device.exists() and device.company_id and device.company_id in allowed:
                 return device.company_id.sudo()
 
         return env.company.sudo()
@@ -96,6 +107,18 @@ class BlQzSigningController(http.Controller):
             "Revise la configuracion en Punto de Venta > Ajustes."
         ))
 
+    @staticmethod
+    def _require_existing_material_unless_admin(company):
+        # Solo un administrador puede CREAR el material de firma. Quien opera el punto de venta
+        # usa el certificado que ya existe; si todavia no hay uno, se le avisa en vez de generarlo.
+        if request.env.user.has_group("base.group_system"):
+            return
+        if not has_company_signing_material(company.sudo()):
+            raise UserError(_(
+                "Todavia no hay un certificado de firma para esta compania. "
+                "Pidale a un administrador que lo genere desde Ajustes."
+            ))
+
     def _get_certificate_pem(self, pos_config_id=None, device_id=None, company_id=None):
         company = self._resolve_company(
             pos_config_id=pos_config_id,
@@ -108,6 +131,7 @@ class BlQzSigningController(http.Controller):
                 "Active la opcion de firma en la configuracion de la compania."
             ))
 
+        self._require_existing_material_unless_admin(company)
         params = request.env["ir.config_parameter"].sudo()
         base_url = params.get_param("web.base.url", "")
         try:
@@ -143,6 +167,7 @@ class BlQzSigningController(http.Controller):
                 "Active la opcion de firma en la configuracion de la compania."
             ))
 
+        self._require_existing_material_unless_admin(company)
         params = request.env["ir.config_parameter"].sudo()
         base_url = params.get_param("web.base.url", "")
         try:
@@ -203,8 +228,16 @@ class BlQzSigningController(http.Controller):
         auth="user",
     )
     def qz_sign(self, data_to_sign=None, pos_config_id=None, device_id=None, company_id=None):
+        # Solo quien opera el punto de venta (o administra) puede pedir firmas: antes
+        # cualquier usuario con sesion, hasta uno de portal, obtenia la firma de lo que
+        # quisiera (H2). El tope de tamanio frena abusos; un ticket con logo pesa mucho menos.
+        user = request.env.user
+        if not (user.has_group("point_of_sale.group_pos_user") or user.has_group("base.group_system")):
+            raise AccessError(_("No tiene permiso para firmar solicitudes de QZ Tray."))
         if not data_to_sign or not isinstance(data_to_sign, str):
             raise UserError(_("No hay contenido para firmar en la solicitud QZ."))
+        if len(data_to_sign) > MAX_SIGN_CHARS:
+            raise UserError(_("La solicitud QZ es demasiado grande para firmar."))
 
         private_key_pem = self._get_private_key_pem(
             pos_config_id=pos_config_id,

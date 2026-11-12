@@ -6,7 +6,7 @@ import uuid
 from psycopg2 import IntegrityError, errors as pgerrors
 
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -93,6 +93,15 @@ class BlQzDevice(models.Model):
 
         Actualiza last_seen. Es el unico punto de entrada desde el POS.
         """
+        # La funcion trabaja con sudo: solo quien opera el POS o administra puede usarla.
+        # Antes cualquier usuario con sesion, hasta uno de portal, podia crear equipos (N30).
+        user = self.env.user
+        if not (
+            self.env.su
+            or user.has_group("point_of_sale.group_pos_user")
+            or user.has_group("base.group_system")
+        ):
+            raise AccessError(_("No tiene permiso para registrar equipos de impresion."))
         resolved_uuid = device_uuid.strip() if isinstance(device_uuid, str) else ""
         if not resolved_uuid:
             return False
@@ -306,6 +315,10 @@ class BlQzDevice(models.Model):
 
     def action_generate_qz_signing_material(self):
         self.ensure_one()
+        # Renovar el certificado deja de confiar en todas las PCs hasta reinstalarlo: solo
+        # el administrador (el panel ya oculta el boton a los demas) (H3).
+        if not self.env.user.has_group("base.group_system"):
+            raise AccessError(_("Solo un administrador puede renovar el certificado de firma."))
         params = self.env["ir.config_parameter"].sudo()
         base_url = params.get_param("web.base.url", "")
         try:
