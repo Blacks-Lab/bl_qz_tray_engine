@@ -12,6 +12,12 @@
     --bl-border: var(--bs-border-color, #dee2e6);
     --bl-text-muted: var(--bs-secondary-color, #6c757d);
     --bl-card-bg: var(--bs-body-bg, #fff);
+    // Sangria de la configuracion interna de cada tarjeta de modulo (T081). El titulo de la tarjeta arranca donde
+    // termina el circulo grande (.bl-num) mas el hueco de la cabecera (.bl-card-head): esos dos valores viven aca y
+    // las dos reglas de abajo los leen, asi la sangria sigue sola al titulo si alguna vez cambian.
+    --bl-num-size: 46px;
+    --bl-head-gap: 0.9rem;
+    --bl-indent: calc(var(--bl-num-size) + var(--bl-head-gap));
     // Etiquetas "antes: ..." para revisar lo que se movio. Poner "none" para ocultarlas todas.
     --bl-review-display: inline-block;
 }
@@ -51,10 +57,20 @@
     }
 }
 
+// Sangria: todo lo que cuelga de la tarjeta de un modulo, salvo la cabecera, queda hacia adentro, debajo del titulo y no
+// del circulo. Con eso se distingue la configuracion de un modulo de la del otro. Es margin y no padding para que las
+// lineas que separan las opciones (border-top de .bl-opt) tambien arranquen en el titulo. Son hijos directos de la
+// tarjeta: los titulos de grupo (p.bl-card-sub), las opciones (.bl-opt), el panel de equipos (.o_bl_qz_device_panel, de
+// donde cuelgan sus .bl-opt) y la ranura del modulo hermano (#bl_l10n_ticket_alt_slot, con su bloque de titulo).
+// Especificidad (0,2,0): le gana a "margin: ... 0 0" de .bl-card-sub (0,1,0), y no toca el margin-top de mt-3.
+.bl-card-module > :not(.bl-card-head) {
+    margin-left: var(--bl-indent);
+}
+
 .bl-card-head {
     display: flex;
     align-items: center;
-    gap: 0.9rem;
+    gap: var(--bl-head-gap);
     margin-bottom: 0.5rem;
     padding-bottom: 0.9rem;
     border-bottom: 1px solid var(--bl-border);
@@ -65,8 +81,8 @@
     flex: none;
     align-items: center;
     justify-content: center;
-    width: 46px;
-    height: 46px;
+    width: var(--bl-num-size);
+    height: var(--bl-num-size);
     border-radius: 50%;
     background: var(--bl-accent);
     color: #fff;
