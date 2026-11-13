@@ -568,6 +568,12 @@ export async function sendRawToQzPrinter(rawPayload, posConfig = {}, options = {
                 config = qz.configs.create(printerName, configOptions);
                 continue;
             }
+            // El reintento seguro ya se uso y volvio a fallar ANTES de que QZ recibiera el trabajo: no salio
+            // nada, asi que no tiene sentido preguntar "salio el comprobante?" (el cajero podria
+            // contestar que si y perder el ticket). Es un error comun.
+            if (isSafeToRetryPrint(error)) {
+                throw error;
+            }
             // Un corte por TIEMPO durante el envio (QZ no contesto en 30 s) tambien es ambiguo: el
             // trabajo pudo haber llegado. Los tiempos de conexion previos al envio no (D-timeout).
             if (!isTransientQzConnectionError(error) && !isPrintTimeout(error)) {

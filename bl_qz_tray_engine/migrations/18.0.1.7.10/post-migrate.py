@@ -16,5 +16,5 @@ def migrate(cr, version):
     )
     cr.execute(
         "UPDATE pos_config SET qz_logo_scale_percent = 50 "
-        "WHERE qz_logo_scale_percent > 0 AND qz_logo_scale_percent < 50"
+        "WHERE qz_logo_scale_percent <> 0 AND qz_logo_scale_percent < 50"
     )
