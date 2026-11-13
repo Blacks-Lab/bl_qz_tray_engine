@@ -3,7 +3,7 @@
 import logging
 
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 from ..bl_qz_signing_utils import ensure_company_signing_material, has_company_signing_material
 
@@ -93,6 +93,8 @@ class ResConfigSettings(models.TransientModel):
 
     def action_generate_qz_signing_material(self):
         self.ensure_one()
+        if not self.env.user.has_group("base.group_system"):
+            raise AccessError(_("Solo un administrador puede renovar el certificado de firma."))
         params = self.env["ir.config_parameter"].sudo()
         base_url = params.get_param("web.base.url", "")
         try:

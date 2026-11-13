@@ -6,7 +6,7 @@ import uuid
 from psycopg2 import IntegrityError, errors as pgerrors
 
 from odoo import _, api, fields, models
-from odoo.exceptions import AccessError, UserError
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
 
@@ -76,6 +76,14 @@ class BlQzDevice(models.Model):
             "Ya existe un equipo con ese identificador.",
         ),
     ]
+
+    @api.constrains("device_uuid")
+    def _check_device_uuid_length(self):
+        # Mismo tope que bl_qz_resolve_device: un identificador mas largo nunca podria
+        # volver a encontrarse desde el POS (H13).
+        for rec in self:
+            if not rec.device_uuid or len(rec.device_uuid) > 100:
+                raise ValidationError(_("El identificador del equipo debe tener entre 1 y 100 caracteres."))
 
     @api.model
     def _bl_qz_default_module_rows(self):
@@ -392,6 +400,15 @@ class BlQzDevicePrinter(models.Model):
             "Cada modulo puede tener una sola fila por equipo.",
         ),
     ]
+
+    @api.constrains("module_key")
+    def _check_module_key(self):
+        # El desplegable no impide cargar por RPC una clave que no existe: la fila quedaria
+        # huerfana y ningun modulo la leeria jamas.
+        valid = {key for key, _label in self._bl_qz_module_key_selection()}
+        for rec in self:
+            if rec.module_key not in valid:
+                raise ValidationError(_("La clave de modulo '%s' no existe.", rec.module_key))
 
     @api.model
     def _bl_qz_module_keys(self):

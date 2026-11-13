@@ -331,9 +331,13 @@ export class BlQzDevicePanel extends Component {
         } catch (error) {
             this.state.error = error?.message || _t("No se pudo guardar la configuracion del equipo.");
             this.notification.add(this.state.error, { type: "danger" });
+            // Si el usuario ya cambio otra cosa mientras se guardaba, NO se vuelve a lo del
+            // servidor (perderia ese cambio): el guardado que sigue manda la fila completa.
+            if (this._blQzSavePending) {
+                return;
+            }
             // La pantalla ya mostraba el valor nuevo aunque no se guardo: se vuelve a leer lo
             // que realmente tiene el servidor para no mostrar un dato falso (H17).
-            this._blQzSavePending = false;
             try {
                 const current = await this.orm.call("bl.qz.device", "bl_qz_resolve_device", [
                     device.device_uuid,

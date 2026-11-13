@@ -33,6 +33,31 @@ patch(PosStore.prototype, {
         }
         this._blQzWatching = true;
         let timer = null;
+        // Una relectura que llega muy pronto o con otra en curso NO se descarta: se posterga, asi
+        // un cambio hecho en Ajustes siempre llega al POS (antes se perdia hasta el proximo foco).
+        const run = async () => {
+            timer = null;
+            if (this._blQzRefreshing) {
+                this._blQzRefreshPending = true;
+                return;
+            }
+            const wait = BL_QZ_REFRESH_MIN_INTERVAL_MS - (Date.now() - (this._blQzLastRefresh || 0));
+            if (wait > 0) {
+                timer = setTimeout(run, wait);
+                return;
+            }
+            this._blQzRefreshing = true;
+            this._blQzLastRefresh = Date.now();
+            try {
+                await this.blQzLoadDevice({ keepOnError: true });
+            } finally {
+                this._blQzRefreshing = false;
+                if (this._blQzRefreshPending) {
+                    this._blQzRefreshPending = false;
+                    refresh();
+                }
+            }
+        };
         const refresh = () => {
             if (document.visibilityState === "hidden") {
                 return;
@@ -40,23 +65,7 @@ patch(PosStore.prototype, {
             if (timer) {
                 clearTimeout(timer);
             }
-            timer = setTimeout(async () => {
-                timer = null;
-                const now = Date.now();
-                if (
-                    this._blQzRefreshing ||
-                    now - (this._blQzLastRefresh || 0) < BL_QZ_REFRESH_MIN_INTERVAL_MS
-                ) {
-                    return;
-                }
-                this._blQzRefreshing = true;
-                this._blQzLastRefresh = now;
-                try {
-                    await this.blQzLoadDevice({ keepOnError: true });
-                } finally {
-                    this._blQzRefreshing = false;
-                }
-            }, BL_QZ_REFRESH_DELAY_MS);
+            timer = setTimeout(run, BL_QZ_REFRESH_DELAY_MS);
         };
         document.addEventListener("visibilitychange", refresh);
         window.addEventListener("focus", refresh);

@@ -337,7 +337,11 @@ export async function normalizeLogoForEscPos(base64ImageData, options = {}) {
         img.src = imageDataUrl;
     }), dataUrlToBase64(imageDataUrl));
 
-    if (rendered) {
+    // Si el procesado fallo (o se agoto el tiempo) lo que vuelve es el logo ORIGINAL sin procesar:
+    // no se guarda en la memoria, asi el proximo ticket vuelve a intentarlo (antes quedaba
+    // pegado hasta recargar el punto de venta).
+    const failed = rendered === dataUrlToBase64(imageDataUrl);
+    if (rendered && !failed) {
         cacheSet(normalizedLogoCache, cacheKey, rendered);
     }
     return rendered;

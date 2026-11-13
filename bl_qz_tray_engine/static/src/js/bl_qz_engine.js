@@ -169,6 +169,12 @@ function isSafeToRetryPrint(error) {
     ].some((token) => detail.includes(token));
 }
 
+// El tiempo agotado de la llamada de impresion ("QZ Tray timeout (call)"): QZ no confirmo, pero el
+// trabajo ya pudo estar en la impresora.
+function isPrintTimeout(error) {
+    return Boolean(error?.blQzTimeout) && /timeout \(call\)/i.test(normalizeQzErrorMessage(error));
+}
+
 // Quien muestra el aviso "posible falla de comunicacion con la impresora" (el POS lo registra
 // con un dialogo). Recibe { jobName, printerName, attempt, error } y devuelve una promesa con
 // "retry" (reintentar), "printed" (ya se imprimio) o "cancel".
@@ -562,7 +568,9 @@ export async function sendRawToQzPrinter(rawPayload, posConfig = {}, options = {
                 config = qz.configs.create(printerName, configOptions);
                 continue;
             }
-            if (!isTransientQzConnectionError(error)) {
+            // Un corte por TIEMPO durante el envio (QZ no contesto en 30 s) tambien es ambiguo: el
+            // trabajo pudo haber llegado. Los tiempos de conexion previos al envio no (D-timeout).
+            if (!isTransientQzConnectionError(error) && !isPrintTimeout(error)) {
                 throw error;
             }
 
@@ -586,10 +594,16 @@ export async function sendRawToQzPrinter(rawPayload, posConfig = {}, options = {
                 continue;
             }
             const ambiguous = new Error(
-                "Se cortó la conexión con QZ Tray mientras se imprimía y no se confirmó el comprobante. " +
+                (isPrintTimeout(error)
+                    ? "QZ Tray no confirmó a tiempo que el comprobante se imprimió. "
+                    : "Se cortó la conexión con QZ Tray mientras se imprimía y no se confirmó el comprobante. ") +
                     "Revisá si salió antes de volver a imprimir, para no duplicarlo."
             );
             ambiguous.blQzFriendly = true;
+            // Marca para quien llame: este error NO significa "no salio". Una pantalla que
+            // imprime por el navegador ante un error de QZ debe revisar esta marca primero,
+            // si no puede duplicar el comprobante.
+            ambiguous.blQzAmbiguous = true;
             ambiguous.blQzDetail = normalizeQzErrorMessage(error);
             throw ambiguous;
         }

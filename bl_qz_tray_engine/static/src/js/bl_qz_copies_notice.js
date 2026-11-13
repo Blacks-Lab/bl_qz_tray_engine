@@ -6,6 +6,9 @@ import { useService } from "@web/core/utils/hooks";
 import { standardWidgetProps } from "@web/views/widgets/standard_widget_props";
 
 const DEVICE_UUID_KEY = "bl_qz_device_uuid";
+// Consulta en curso, compartida por todos los avisos de copias abiertos a la vez (se borra al terminar,
+// asi una lectura posterior siempre trae el dato nuevo).
+let sharedLoad = null;
 
 /**
  * Aviso que va debajo del campo de copias de un modulo (por ejemplo "Copias del comprobante").
@@ -62,10 +65,23 @@ export class BlQzCopiesNotice extends Component {
             return;
         }
         try {
-            const device = await this.orm.call("bl.qz.device", "bl_qz_resolve_device", [
-                uuid,
-                `Equipo ${uuid.slice(0, 8)}`,
-            ]);
+            // Hay un aviso por cada modulo y todos se actualizan juntos al volver a la pestania:
+            // comparten UNA sola consulta (cada una escribe last_seen en el servidor).
+            if (!sharedLoad || sharedLoad.uuid !== uuid) {
+                const promise = this.orm.call("bl.qz.device", "bl_qz_resolve_device", [
+                    uuid,
+                    `Equipo ${uuid.slice(0, 8)}`,
+                ]);
+                const entry = { uuid, promise };
+                sharedLoad = entry;
+                const clear = () => {
+                    if (sharedLoad === entry) {
+                        sharedLoad = null;
+                    }
+                };
+                promise.then(clear, clear);
+            }
+            const device = await sharedLoad.promise;
             this.state.locked = Boolean(
                 device &&
                     device.qz_enabled !== false &&

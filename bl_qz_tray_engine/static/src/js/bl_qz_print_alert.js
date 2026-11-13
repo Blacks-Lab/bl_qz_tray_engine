@@ -29,7 +29,13 @@ export class BlQzPrintAlertDialog extends Component {
     }
 
     get attemptText() {
-        return this.props.attempt > 1 ? "Ya se reintentó una vez y volvió a cortarse." : "";
+        const done = (this.props.attempt || 1) - 1;
+        if (done < 1) {
+            return "";
+        }
+        return done === 1
+            ? "Ya se reintentó una vez y volvió a cortarse."
+            : `Ya se reintentó ${done} veces y volvió a cortarse.`;
     }
 
     decide(value) {
