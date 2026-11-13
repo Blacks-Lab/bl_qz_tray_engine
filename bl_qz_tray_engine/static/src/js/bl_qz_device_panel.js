@@ -328,6 +328,9 @@ export class BlQzDevicePanel extends Component {
                 this._setDeviceState(refreshed);
             }
             this.notification.add(_t("Configuracion del equipo guardada."), { type: "success" });
+            // Los carteles de copias de los formularios (por ejemplo "Copias del comprobante") se
+            // actualizan solos al instante, sin guardar el formulario ni recargar.
+            window.dispatchEvent(new CustomEvent("bl_qz_device_changed"));
         } catch (error) {
             this.state.error = error?.data?.message || error?.message || _t("No se pudo guardar la configuracion del equipo.");
             this.notification.add(this.state.error, { type: "danger" });

@@ -44,13 +44,20 @@ export class BlQzCopiesNotice extends Component {
                 this._load();
             }
         };
+        // El panel de QZ avisa apenas guarda un cambio: el cartel se actualiza al instante, sin
+        // tener que guardar el formulario.
+        this._reloadNow = () => {
+            this._load();
+        };
         onMounted(() => {
             document.addEventListener("visibilitychange", this._reloadOnReturn);
             window.addEventListener("focus", this._reloadOnReturn);
+            window.addEventListener("bl_qz_device_changed", this._reloadNow);
         });
         onWillUnmount(() => {
             document.removeEventListener("visibilitychange", this._reloadOnReturn);
             window.removeEventListener("focus", this._reloadOnReturn);
+            window.removeEventListener("bl_qz_device_changed", this._reloadNow);
         });
     }
 
