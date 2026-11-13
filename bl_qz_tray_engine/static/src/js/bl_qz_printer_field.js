@@ -31,7 +31,7 @@ function normalizeFindResult(value) {
 }
 
 function errorMessage(error) {
-    return error?.message || _t("No se pudo detectar impresoras con QZ Tray.");
+    return error?.data?.message || error?.message || _t("No se pudo detectar impresoras con QZ Tray.");
 }
 
 export class BlQzPrinterSelectionDialog extends Component {
@@ -60,7 +60,7 @@ export class BlQzPrinterSelectionDialog extends Component {
         } catch (error) {
             // Antes el error quedaba sin atrapar y el dialogo abierto sin explicacion (H25).
             this.notification.add(
-                error?.message || _t("No se pudo guardar la impresora elegida."),
+                error?.data?.message || error?.message || _t("No se pudo guardar la impresora elegida."),
                 { type: "danger" }
             );
             return;

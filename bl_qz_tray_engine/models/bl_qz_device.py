@@ -3,12 +3,22 @@
 import logging
 import uuid
 
-from psycopg2 import IntegrityError, errors as pgerrors
+from psycopg2 import IntegrityError, errorcodes, errors as pgerrors
 
 from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
+
+
+class BlQzConcurrentCreate(pgerrors.SerializationFailure):
+    """Error de serializacion con el codigo que Odoo necesita para repetir la solicitud.
+
+    Una excepcion de psycopg2 creada a mano nace con pgcode=None y `odoo.service.model.retrying`
+    hace `errorcodes.lookup(exc.pgcode)` antes de reintentar: sin codigo termina en KeyError.
+    """
+
+    pgcode = errorcodes.SERIALIZATION_FAILURE
 
 from ..bl_qz_signing_utils import ensure_company_signing_material
 
@@ -143,12 +153,14 @@ class BlQzDevice(models.Model):
                         }
                     )
             except IntegrityError as error:
+                if error.pgcode != errorcodes.UNIQUE_VIOLATION:
+                    raise
                 # Otra solicitud simultanea creo el mismo equipo y ya confirmo (H23). Con el
                 # aislamiento de Odoo (REPEATABLE READ) esta transaccion no puede verlo todavia:
                 # se pide a Odoo que repita la solicitud completa, y en la repeticion la busqueda
                 # lo encuentra. Lanzar un error de serializacion es lo que Odoo reintenta solo;
                 # una violacion de unicidad la devuelve al usuario como error.
-                raise pgerrors.SerializationFailure(
+                raise BlQzConcurrentCreate(
                     "Equipo QZ creado en simultaneo; se repite la solicitud."
                 ) from error
 

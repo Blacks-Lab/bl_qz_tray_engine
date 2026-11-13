@@ -25,7 +25,6 @@ _SCHEMA_COLUMNS = {
 _OLD_TO_NEW_PARAMS = {
     "l10n_ar_pos_einvoice_ticket.qz_signing_enabled": "bl_qz_tray.qz_signing_enabled",
     "l10n_ar_pos_einvoice_ticket.qz_signing_certificate_pem": "bl_qz_tray.qz_signing_certificate_pem",
-    "l10n_ar_pos_einvoice_ticket.qz_signing_private_key_pem": "bl_qz_tray.qz_signing_private_key_pem",
 }
 
 

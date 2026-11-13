@@ -241,7 +241,7 @@ export class BlQzDevicePanel extends Component {
             ]);
             this._setDeviceState(device);
         } catch (error) {
-            this.state.error = error?.message || _t("No se pudo cargar la configuracion del equipo.");
+            this.state.error = error?.data?.message || error?.message || _t("No se pudo cargar la configuracion del equipo.");
         } finally {
             this.state.loading = false;
         }
@@ -329,7 +329,7 @@ export class BlQzDevicePanel extends Component {
             }
             this.notification.add(_t("Configuracion del equipo guardada."), { type: "success" });
         } catch (error) {
-            this.state.error = error?.message || _t("No se pudo guardar la configuracion del equipo.");
+            this.state.error = error?.data?.message || error?.message || _t("No se pudo guardar la configuracion del equipo.");
             this.notification.add(this.state.error, { type: "danger" });
             // Si el usuario ya cambio otra cosa mientras se guardaba, NO se vuelve a lo del
             // servidor (perderia ese cambio): el guardado que sigue manda la fila completa.
@@ -470,7 +470,7 @@ export class BlQzDevicePanel extends Component {
             this.state.printer_name = selectedPrinter;
             await this._saveDevice();
         } catch (error) {
-            const message = error?.message || _t("No se pudo detectar impresoras con QZ Tray.");
+            const message = error?.data?.message || error?.message || _t("No se pudo detectar impresoras con QZ Tray.");
             this.notification.add(message, { type: "danger" });
         } finally {
             this.state.detecting = false;
@@ -498,7 +498,7 @@ export class BlQzDevicePanel extends Component {
             );
             await this._saveDevice();
         } catch (error) {
-            const message = error?.message || _t("No se pudo detectar impresoras con QZ Tray.");
+            const message = error?.data?.message || error?.message || _t("No se pudo detectar impresoras con QZ Tray.");
             this.notification.add(message, { type: "danger" });
         } finally {
             this.state.detecting = false;
@@ -515,7 +515,7 @@ export class BlQzDevicePanel extends Component {
                 await this.action.doAction(result);
             }
         } catch (error) {
-            const message = error?.message || _t("No se pudo ejecutar la accion solicitada.");
+            const message = error?.data?.message || error?.message || _t("No se pudo ejecutar la accion solicitada.");
             this.notification.add(message, { type: "danger" });
         }
     }

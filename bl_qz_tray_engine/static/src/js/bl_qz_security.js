@@ -114,11 +114,13 @@ function normalizeAlgorithm(value) {
 }
 
 function normalizeErrorMessage(error, fallback) {
-    if (error?.message) {
-        return error.message;
-    }
+    // En un error de RPC de Odoo, `message` es el texto fijo "Odoo Server Error" y el aviso real
+    // (UserError, AccessError) va en `data.message`: se mira primero.
     if (error?.data?.message) {
         return error.data.message;
+    }
+    if (error?.message) {
+        return error.message;
     }
     if (typeof error === "string") {
         return error;
@@ -186,11 +188,20 @@ async function fetchCertificateAndAlgorithm() {
     return payload;
 }
 
+// Sube cada vez que la puerta da por perdido un pedido (tiempo agotado) o cierra el socket. Una firma
+// que llega despues de eso se descarta: qz-tray.js envia el trabajo apenas llega la firma, sin
+// mirar cuanto tardo, y el cajero ya pudo haber reintentado (saldria el comprobante dos veces).
+let signEpoch = 0;
+
 async function signContent(dataToSign) {
+    const epoch = signEpoch;
     const response = await rpc(
         SIGN_ROUTE,
         buildSigningPayload({ data_to_sign: dataToSign })
     );
+    if (epoch !== signEpoch) {
+        throw new Error("Firma descartada: el pedido ya se dio por perdido.");
+    }
     const signature = parseSignatureResponse(response);
 
     if (!signature || typeof signature !== "string") {
@@ -314,6 +325,7 @@ function qzIsActive(qz) {
 }
 
 async function closeSocket(qz) {
+    signEpoch += 1;
     const wasActive = socketOpened || qzIsActive(qz);
     socketOpened = false;
     socketCertificate = null;
@@ -421,6 +433,9 @@ async function callQz(qz, operation, timeoutMs, fallbackMessage) {
     try {
         return await withTimeout(Promise.resolve().then(() => operation(qz)), timeoutMs, "call");
     } catch (error) {
+        if (error?.blQzTimeout) {
+            signEpoch += 1;
+        }
         if (!isPoisonedError(error)) {
             throw friendlyError(describeQzConnectionError(error, fallbackMessage), error);
         }
@@ -429,6 +444,9 @@ async function callQz(qz, operation, timeoutMs, fallbackMessage) {
     try {
         return await withTimeout(Promise.resolve().then(() => operation(qz)), timeoutMs, "call");
     } catch (retryError) {
+        if (retryError?.blQzTimeout) {
+            signEpoch += 1;
+        }
         throw friendlyError(describeQzConnectionError(retryError, fallbackMessage), retryError);
     }
 }
@@ -484,8 +502,9 @@ export async function ensureQzSecurityConfigured() {
                 if (qz) {
                     qz.__blQzSecurityConfigured = false;
                 }
-                throw new Error(
-                    normalizeErrorMessage(error, "No se pudo inicializar la firma de seguridad para QZ Tray.")
+                throw friendlyError(
+                    normalizeErrorMessage(error, "No se pudo inicializar la firma de seguridad para QZ Tray."),
+                    error
                 );
             })
             .finally(() => {
