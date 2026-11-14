@@ -18,8 +18,6 @@
     --bl-num-size: 46px;
     --bl-head-gap: 0.9rem;
     --bl-indent: calc(var(--bl-num-size) + var(--bl-head-gap));
-    // Etiquetas "antes: ..." para revisar lo que se movio. Poner "none" para ocultarlas todas.
-    --bl-review-display: inline-block;
 }
 
 .bl-modules-title {
@@ -140,19 +138,6 @@
     margin: 0.1rem 0 0.4rem;
     font-size: 0.8125rem;
     color: var(--bl-text-muted);
-}
-
-.bl-review-tag {
-    display: var(--bl-review-display);
-    margin-left: 0.5rem;
-    padding: 0.05rem 0.55rem;
-    border: 1px solid var(--bl-accent-line);
-    border-radius: 999px;
-    background: var(--bl-accent-soft);
-    color: var(--bl-accent);
-    font-size: 0.6875rem;
-    font-weight: 500;
-    vertical-align: middle;
 }
 
 // Un <setting> que contiene una tarjeta ocupa todo el ancho (por defecto Odoo lo pone a media pantalla).

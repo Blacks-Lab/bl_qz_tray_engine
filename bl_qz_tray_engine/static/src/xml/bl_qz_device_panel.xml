@@ -18,7 +18,7 @@
                     <div class="bl-opt">
                         <span class="bl-num bl-num-sm"><t t-esc="nums.enabled"/></span>
                         <div class="bl-opt-body">
-                            <p class="bl-opt-label">Usar impresion por QZ Tray en este equipo<span class="bl-review-tag">pasa al primer lugar</span></p>
+                            <p class="bl-opt-label">Usar impresion por QZ Tray en este equipo</p>
                             <p class="bl-opt-help">Si lo apagas, esta computadora imprime con el navegador y no se muestran las demas opciones.</p>
                             <div class="form-check">
                                 <input
@@ -42,7 +42,7 @@
                     <div class="bl-opt">
                         <span class="bl-num bl-num-sm"><t t-esc="nums.name"/></span>
                         <div class="bl-opt-body">
-                            <p class="bl-opt-label">Nombre de este equipo<span class="bl-review-tag">queda igual</span></p>
+                            <p class="bl-opt-label">Nombre de este equipo</p>
                             <p class="bl-opt-help">Es el nombre con el que aparece esta computadora en la lista de equipos.</p>
                             <input
                                 type="text"
@@ -57,7 +57,7 @@
                     <div class="bl-opt">
                         <span class="bl-num bl-num-sm"><t t-esc="nums.mode"/></span>
                         <div class="bl-opt-body">
-                            <p class="bl-opt-label">Modo de impresora<span class="bl-review-tag">queda igual</span></p>
+                            <p class="bl-opt-label">Modo de impresora</p>
                             <p class="bl-opt-help">Una impresora para todos los comprobantes, o una distinta para cada uno.</p>
                             <div class="d-flex gap-4 flex-wrap">
                                 <div class="form-check">
@@ -98,7 +98,7 @@
                         <div class="bl-opt">
                             <span class="bl-num bl-num-sm"><t t-esc="nums.printer"/></span>
                             <div class="bl-opt-body">
-                                <p class="bl-opt-label">Impresora del equipo<span class="bl-review-tag">queda igual</span></p>
+                                <p class="bl-opt-label">Impresora del equipo</p>
                                 <p class="bl-opt-help">La impresora que usa esta computadora para todos los comprobantes.</p>
                                 <div class="d-flex gap-2 flex-wrap">
                                     <input
@@ -130,7 +130,7 @@
                         <div class="bl-opt">
                             <span class="bl-num bl-num-sm"><t t-esc="nums.copies"/></span>
                             <div class="bl-opt-body">
-                                <p class="bl-opt-label">Cantidad de copias<span class="bl-review-tag">vuelve, ahora con interruptor</span></p>
+                                <p class="bl-opt-label">Cantidad de copias</p>
                                 <p class="bl-opt-help">Encendido: todos los comprobantes de esta computadora imprimen la misma cantidad. Apagado: cada modulo usa su propia cantidad.</p>
                                 <div class="form-check form-switch bl-switch">
                                     <input
@@ -160,16 +160,13 @@
                                     <span t-if="state.copies_all" class="bl-opt-help m-0">Todos los comprobantes de esta computadora imprimen esta cantidad.</span>
                                     <span t-else="" class="bl-opt-help m-0">Apagado: cada comprobante usa las copias de su modulo (por ejemplo, "Copias del comprobante" en el ticket de venta).</span>
                                 </div>
-                                <p class="bl-opt-help mt-2">
-                                    <span class="bl-review-tag">por ahora lo respetan el ticket de venta y el pago a proveedor; el resto de los modulos se suma uno por uno</span>
-                                </p>
                             </div>
                         </div>
 
                         <div class="bl-opt">
                             <span class="bl-num bl-num-sm"><t t-esc="nums.force"/></span>
                             <div class="bl-opt-body">
-                                <p class="bl-opt-label">Force RAW<span class="bl-review-tag">queda igual</span></p>
+                                <p class="bl-opt-label">Force RAW</p>
                                 <p class="bl-opt-help">Enviar el ticket en crudo. Usalo solo si el ticket sale con simbolos raros.</p>
                                 <div class="form-check">
                                     <input
@@ -189,7 +186,7 @@
                         <div class="bl-opt">
                             <span class="bl-num bl-num-sm"><t t-esc="nums.printer"/></span>
                             <div class="bl-opt-body">
-                                <p class="bl-opt-label">Impresora para cada comprobante<span class="bl-review-tag">queda igual</span></p>
+                                <p class="bl-opt-label">Impresora para cada comprobante</p>
                                 <p class="bl-opt-help">Elegi la impresora de cada comprobante y, si hace falta, activa Force RAW.</p>
                                 <div class="table-responsive">
                                     <table class="table table-sm align-middle mb-0">
@@ -256,7 +253,6 @@
                                 </div>
                                 <p class="bl-opt-help mt-2">
                                     Con una impresora por modulo, cada comprobante usa las copias de su modulo (por ejemplo, "Copias del comprobante" en el ticket de venta). Solo el recibo de pago a proveedor toma su cantidad de esta tabla.
-                                    <span class="bl-review-tag">se quito: "Copias" de los demas comprobantes (valian 1)</span>
                                 </p>
                             </div>
                         </div>
@@ -265,7 +261,7 @@
                     <div class="bl-opt">
                         <span class="bl-num bl-num-sm"><t t-esc="nums.tests"/></span>
                         <div class="bl-opt-body">
-                            <p class="bl-opt-label">Pruebas y firma de QZ Tray<span class="bl-review-tag">queda igual</span></p>
+                            <p class="bl-opt-label">Pruebas y firma de QZ Tray</p>
                             <p class="bl-opt-help">Imprimí una cabecera de prueba y administrá el certificado de firma.</p>
                             <div class="d-flex gap-2 flex-wrap">
                                 <button
