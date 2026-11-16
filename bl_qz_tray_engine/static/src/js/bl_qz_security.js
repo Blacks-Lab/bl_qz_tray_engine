@@ -52,6 +52,10 @@ let setupPromise = null;
 let qzLibraryPromise = null;
 let cachedCertificate = null;
 let cachedAlgorithm = DEFAULT_ALGORITHM;
+// El certificado cacheado es "estrenable": se pidio al servidor y ninguna conexion (ni un socket ajeno adoptado) lo uso todavia.
+// Apenas lo usa un intento de conexion o una adopcion deja de serlo, y todo intento posterior vuelve a pedirlo por si se renovo
+// en el servidor mientras la pestania seguia abierta (N23): no se supone nada sobre cuantas conexiones hubo ni si salieron bien.
+let certFreshForNextConnect = false;
 
 // Estado propio de la puerta: la libreria solo expone isActive(), que en 2.2.5
 // cuenta CONNECTING como activo.
@@ -340,6 +344,20 @@ async function closeSocket(qz) {
     }
 }
 
+async function refreshCertificateIfChanged(qz) {
+    try {
+        // Con tope de tiempo: si el servidor no contesta, la reconexion no se cuelga (se conserva el certificado anterior).
+        const payload = await withTimeout(fetchCertificateAndAlgorithm(), CALL_TIMEOUT_MS, "certificate");
+        if (payload.certificate !== cachedCertificate) {
+            cachedCertificate = payload.certificate;
+            cachedAlgorithm = payload.algorithm;
+            qz.security.setSignatureAlgorithm(cachedAlgorithm);
+        }
+    } catch {
+        // Si el servidor no contesta se conserva el certificado anterior.
+    }
+}
+
 async function openSocket(qz) {
     if (qzIsActive(qz)) {
         // Socket abierto por otro codigo de la misma pagina (p. ej. la prueba de
@@ -348,8 +366,15 @@ async function openSocket(qz) {
         socketOpened = true;
         socketCertificate = cachedCertificate;
         socketGeneration += 1;
+        certFreshForNextConnect = false;
         return true;
     }
+    if (!certFreshForNextConnect) {
+        // Reconexion, o primera conexion que sale bien despues de intentos fallidos o de adoptar un socket ajeno: si el certificado se
+        // renovo en el servidor, esta pestania debe firmar con el nuevo (N23). El primer uso tras el pedido inicial no lo vuelve a pedir.
+        await refreshCertificateIfChanged(qz);
+    }
+    certFreshForNextConnect = false;
     await withTimeout(
         qz.websocket.connect({ ...CONNECT_OPTIONS }),
         HANDSHAKE_TIMEOUT_MS,
@@ -383,7 +408,13 @@ async function openAndVerify(qz) {
                 continue;
             }
             if (error?.blQzTimeout) {
-                await closeSocket(qz);
+                if (adopted) {
+                    // El socket lo abrio otro codigo (p. ej. la prueba de logo de l10n):
+                    // no se cierra, solo se deja de darlo por propio (H19).
+                    socketOpened = false;
+                } else {
+                    await closeSocket(qz);
+                }
             } else if (adopted && !isPoisonedError(error)) {
                 // El socket ajeno todavia estaba conectando.
                 socketOpened = false;
@@ -491,6 +522,7 @@ export async function ensureQzSecurityConfigured() {
                 const payload = await fetchCertificateAndAlgorithm();
                 cachedCertificate = payload.certificate;
                 cachedAlgorithm = payload.algorithm;
+                certFreshForNextConnect = true;
             }
 
             applySecurityHandlers(qz);
